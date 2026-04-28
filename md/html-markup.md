@@ -19,7 +19,8 @@ methods | &nbsp; | &nbsp;
 CSS features | &nbsp;
 :-------|:------
 (모달)::backdrop | 바로 뒤 전체 화면
-[@starting-style](/css-features/#starting-style) | 애니메이션 전환
+~s allow-discrete <br />(`transition-behavior`) | 불연속 속성(display, visibility, overlay)을 애니메이션 대상에 추가 <br /> overlay ~초 까지 레이어(z-index) 유지
+[@starting-style](/css-features/#starting-style) | 애니메이션 시작 순간 초기 스타일
 
 ```html
 <button onclick="openModal()">open</button>
@@ -36,7 +37,7 @@ dialog {
 		transform 0.3s,
 		opacity 0.3s,
 		display 0.3s allow-discrete,
-		overlay 0.3s allow-discrete;
+		overlay 0.3s allow-discrete; /* 최상단 레이어 유지 */
 }
 /* Open State */
 dialog[open] {
@@ -81,7 +82,6 @@ popover CSS features | &nbsp;
 :-------|:------
 ::backdrop | 바로 뒤 전체 화면
 :popover-open | popover open 될 때 스타일
-[@starting-style](/css-features/#starting-style) | 애니메이션 전환
 
 popover Methods | &nbsp;
 :-------|:------
@@ -91,43 +91,40 @@ popover Methods | &nbsp;
 
 ### Toast Popover
 ```html
-<button onclick="createToast('name', '저장', '완료되었습니다.')">Trigger</button>
-<div id="toast-container"></div>
+<button onclick="createToast('완료되었습니다.')">Trigger</button>
 ```
 
 ```css
-[popover] {
-	position: absolute;
+.toast[popover] {
 	inset: unset;
 	right: 20px;
-	padding: 12px 20px;
-	border: 1px solid #ddd;
+	bottom: 20px;
 
 	/* Exit State */
-	transform: translateY(20px); 
+	transform: translateX(100%); 
 	opacity: 0;
 	transition:
-		opacity 0.3s,
-		transform 0.3s,
 		bottom 0.3s,
+		transform 0.3s,
+		opacity 0.3s,
 		display 0.3s allow-discrete,
 		overlay 0.3s allow-discrete;
 }
 /* Open State */
-[popover]:popover-open {
-	transform: translateY(0);
+.toast[popover]:popover-open {
+	transform: translate(0);
 	opacity: 1;
 	
 	/* Before-Open State */
 	@starting-style {
-		transform: translateY(20px);
+		transform: translateY(100%);
 		opacity: 0;
 	}
 }
 ```
 
 ```javascript
-const createToast = (name, title, msg) => {
+const createToast = (msg) => {
 	const popover = document.createElement('div')
 	popover.popover = 'manual'
 	popover.classList.add('toast')
@@ -137,17 +134,16 @@ const createToast = (name, title, msg) => {
 	popover.showPopover()
 	moveToast()
 
-	setTimeout(() => {
+	setTimeout(async() => {
 		popover.hidePopover()
-		setTimeout(() => {
-			popover.remove() // Exit State 후(transition) 삭제
-			moveToast()
-		}, 500)
-	}, 4000)
+
+		await Promise.allSettled(popover.getAnimations().map(ani => ani.finished))
+    popover.remove()
+	}, 3000)
 }
 
 const moveToast = () => {
-	const toasts = document.querySelectorAll('.toast:popover-open')
+	const toasts = Array.from(document.querySelectorAll('.toast:popover-open')).reverse()
 	const margin = 10
 	const initialBottom = 20
 
@@ -157,6 +153,7 @@ const moveToast = () => {
 	})
 }
 ```
+- [getanimations()](/web-apis/#getanimations)
 
 ### ToggleEvent: newState
 > `<popover>` 요소가 전환되는 상태 String (`<details>` 도 사용가능)
