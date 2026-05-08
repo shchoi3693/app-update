@@ -7,231 +7,132 @@ thumbnail: './img1.jpg'
 ---
 
 
-### SVGR
-> SVG 파일을 React 컴포넌트로 자동 변환해주는 도구
-- Inline SVG로 CSS/JS 제어 가능
-- 트리 쉐이킹, 최적화([svgo](https://github.com/svg/svgo)) 자동 적용
+## Circle Percent
 
-### Next 16 세팅
-- Next 15 `experimental.turbo` &rightarrow; 최상위 `turbopack` 으로 변경  
-	Turbopack은 내부적으로 Webpack 로더 지원
-- svgo 옵션 끄기(svgo 최적화 시 viewBox 제거해 버리며 간헐적으로 깨짐)  
-	최적화는 svg 파일 안에서하기
-
-&nbsp; | Turbopack(Webpack) | CLI
-:------|:----------|:------
-&nbsp; | 실행(빌드) 후 import 할 때 즉석에서 컴포넌트로 변환 | 명령어로 파일 미리 생성
-파일 관리 | 원본 SVG만 관리 | 각 컴포넌트(.tsx) 파일
-&nbsp; | SVG 동적으로 import | 아이콘 수가 많고 미리 변환해야할 때
-
-## 1. Turbopack
-### svgr 옵션 설정
-```js:title=next.config.mjs
-const nextConfig = {
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: [
-          {
-            loader: '@svgr/webpack',
-            options: {
-              svgo: false,
-            },
-
-						/* viewBox 옵션만 끄고 싶다면 ******* */
-						options: {
-              svgoConfig: {
-                plugins: [
-                  {
-                    name: 'preset-default',
-                    params: {
-                      overrides: {
-                        removeViewBox: false,
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-						/* ******************************* */
-
-          },
-        ],
-        as: '*.js',
-      },
-    },
-  },
-}
-```
-### TypeScript 설정
-```ts:title=svgr.d.ts
-declare module '*.svg' {
-  import { FC, SVGProps } from 'react';
-  const content: FC<SVGProps<SVGSVGElement>>;
-  export default content;
-}
-
-declare module '*.svg?url' {
-  const content: any;
-  export default content;
-}
-```
-```ts:title=tsconfig.json
-{
-	"include": [
-	"svgr.d.ts",   // 첫 번째 아이템
-	"next-env.d.ts",
-	"**/*.ts",
-	"**/*.tsx",
-	".next/types/**/*.ts",
-	".next/dev/types/**/*.ts"
-	],
-	//...
-}
-```
-
-## 2. CLI
-### svgr 옵션 설정
-```js:title=.svgrrc.json
-{
-  "prettier": false,
-  "typescript": true,
-  "ext": "tsx",
-  "svgo": false,
-  "svgProps": {
-    "fill": "currentColor"
-  },
-  "icon": false,
-  "jsxRuntime": "automatic"
-}
-```
-```
-pnpm dlx @svgr/cli assets/icons --out-dir components/ui/icons/generated
-```
-#### 결과
-```tsx:title=components/ui/icon/generated/index.tsx
-export { default as Box } from './Box'
-```
-```tsx:title=components/ui/icon/generated/Box.tsx
-import type { SVGProps } from "react";
-const SvgBox = (props: SVGProps<SVGSVGElement>) => <svg width={24} height={24} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
- ...
-</svg>;
-export default SvgBox;
-```
-
-### Custom index template
-- `<IconSome />` 형태로 re-export 하고 싶을 때
-```js:title=script/svgr-index-template.mjs
-import path from 'path';
-
-export default function defaultIndexTemplate(filePaths) {
-	// 커스텀
-  const exportEntries = filePaths.map(({ path: filePath }) => {
-    const basename = path.basename(filePath, path.extname(filePath));
-    const pascalName = basename
-      .replace(/[-_ ]+(.)/g, (_, c) => c.toUpperCase())
-      .replace(/^(.)/, (c) => c.toUpperCase());
-    return `export { default as Icon${pascalName} } from './${basename}'`;
-  });
-  return exportEntries.join('\n');
-}
-```
-```
-pnpm dlx @svgr/cli --index-template scripts/svgr-index-template.mjs assets/icons --out-dir components/ui/icons/generated
-```
-
-#### Custom index template 결과
-```tsx:title=components/ui/icon/generated/index.tsx
-export { default as IconBox } from './Box'
-```
-
-### SVG Wrapper
-- `<IconSome size="md">` 공통 prop 추가하고 싶을 때
-- 복잡한 형태로 꼭 필요한 상황인지 확인
-```js:title=script/generate-icon-components.mjs
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const GENERATED_DIR = path.join(__dirname, '../components/ui/icons/generated');
-const OUTPUT_FILE = path.join(__dirname, '../components/ui/icons/IconComponents.tsx');
-
-const files = fs.readdirSync(GENERATED_DIR);
-const iconNames = files
-  .filter((file) => file.endsWith('.tsx') && !file.startsWith('index'))
-  .map((file) => file.replace('.tsx', ''));
-
-const fileHeader = `import { Icon, IconProps } from './Icon';
-
+<script>
+const dataDashboard = [
+	{ category: "FERT", code: "MR-1022610", state: "Approved", name: "DESC-L-054/DRUM/254KG", pct: 80, manager: "Maya Sakamoto", date: "2025-12-24", time: "10:00 AM" },
+	{ category: "FERT", code: "MR-1022611", state: "Approved", name: "DESC-L-054/DRUM/254KG", pct: 50, manager: "Maya Sakamoto", date: "2025-12-24", time: "11:30 AM" },
+	{ category: "FERT", code: "MR-1022612", state: "In progress", name: "POL-Y-022/BAG/25KG", pct: 70, manager: "Kenji Sato", date: "2026-01-05", time: "09:15 AM" },
+	{ category: "FERT", code: "MR-1022613", state: "Rejected", name: "CHEM-X-101/IBC/1000L", pct: 10, manager: "Maya Sakamoto", date: "2026-01-10", time: "02:45 PM" },
+	{ category: "ROH", code: "MR-1022614", state: "In progress", name: "DESC-L-054/DRUM/254KG", pct: 45, manager: "Elena Rodriguez", date: "2026-01-15", time: "10:00 AM" },
+	{ category: "ROH", code: "MR-1022615", state: "Approved", name: "ACID-K-300/DRUM/200KG", pct: 100, manager: "Maya Sakamoto", date: "2026-01-20", time: "08:30 AM" },
+	{ category: "ROH", code: "MR-1022617", state: "Approved", name: "DESC-L-054/DRUM/254KG", pct: 40, manager: "Elena Rodriguez", date: "2026-02-01", time: "09:05 AM" },
+	{ category: "VERP", code: "MR-1022618", state: "In progress", name: "SOLV-S-900/TANK/5000L", pct: 65, manager: "Maya Sakamoto", date: "2026-02-03", time: "11:00 AM" },
+	{ category: "VERP", code: "MR-1022619", state: "Rejected", name: "POL-Y-022/BAG/25KG", pct: 30, manager: "Kenji Sato", date: "2026-02-05", time: "01:15 PM" },
+	{ category: "VERP", code: "MR-1022620", state: "Approved", name: "DESC-L-054/DRUM/254KG", pct: 78, manager: "Maya Sakamoto", date: "2026-02-10", time: "10:45 AM" },
+	{ category: "VERP", code: "MR-1022622", state: "In progress", name: "ACID-K-300/DRUM/200KG", pct: 85, manager: "Maya Sakamoto", date: "2026-02-15", time: "09:50 AM" },
+	{ category: "INT", code: "MR-1022625", state: "Rejected", name: "SOLV-S-900/TANK/5000L", pct: 5, manager: "Maya Sakamoto", date: "2026-02-22", time: "04:55 PM" }
+]
+const dataCountByState = dataDashboard.reduce((acc, current)=>{
+	acc[current.state] = (acc[current.state] || 0) + 1;
+	return acc;
+}, {})
+const dataProgress = [
+	{label: "In Progress", value: dataCountByState["In progress"], color: "#3174D1"},
+	{label: "Approved", value: dataCountByState["Approved"], color: "#DFA120"},
+	{label: "Rejected", value: dataCountByState["Rejected"], color: "#BA4038"},
+];
+const totalSum = dataProgress.reduce((acc, item) => acc + item.value, 0);
+let accPercent = 0;
+const doughnutChart = dataProgress.reduce((acc, item)=>{
+	const percent = Number(((item.value / totalSum) * 100).toFixed(2));
+	const offset = -accPercent;
+	accPercent += percent;
+	return acc + `
+		<circle r="60" cx="50%" cy="50%"
+			stroke="${item.color}"
+			fill="none"
+			stroke-width="6"
+			stroke-linecap="round"
+			pathLength="100"
+			stroke-dasharray="${percent} 100"
+			stroke-dashoffset="${offset}">
+		</circle>`;
+},"")
+const centerText = `
+	<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" >
+		<tspan x="50%" dy="-0.2em" style="font-size:30px;font-weight:500;">${totalSum}</tspan>
+		<tspan x="50%" dy="1.6em" style="font-size:16px;">TOTAL</tspan>
+	</text>
 `;
-const exportLines = iconNames
-  .map(
-    (name) =>
-      `export const Icon${name} = (props: Omit<IconProps, 'name'>) => <Icon name="${name}" {...props} />;`,
-  )
-  .join('\n');
-const finalCode = fileHeader + exportLines;
+document.querySelector('.doughnut_chart svg').innerHTML = doughnutChart + centerText;
+</script>
 
-fs.writeFileSync(OUTPUT_FILE, finalCode, 'utf-8');
-```
-- 명령어 스크립트 설정
-```js:title=package.json
-"scripts":{
-	//...
-	"svgr:icons": "pnpm dlx @svgr/cli assets/icons --out-dir components/ui/icons/generated",
-	"gen:icons": "node scripts/generate-icon-components.mjs",
-	"svg:icons": "npm run svgr:icons && npm run gen:icons",
-	//...
-}
-```
-#### 결과
-```js:title=components/ui/icons/IconComponents.tsx
-import { Icon, IconProps } from './Icon';
+## 제품의 사용자 경험 증진 internal tool that helps software
 
-export const IconBox = (props: Omit<IconProps, 'name'>) => <Icon name="Box" {...props} />;
+1. 사용자 피드백 활성화
+2. 사용자 신뢰도 측정
+3. 사용자 커스텀
+
+## 미드저니
+
+```
+prop --param
 ```
 
-* * *
+- `--ar` : 종횡비 `--ar 16:9` `--ar 4:5`(인스타)
+- `--no` : 제외 키워드 `--no text, blurry, distorted` (텍스트 흐릿함 방지)
+- `--v 6.0` : 모델 버전
+- `--stylize` : 미드저니 예술성 `--s 0` ~ `--s 1000` 높을수록 창의성
+- `--weirdness` : 실험적 `--w 0` ~ `--w 3000` 높을수록 창의적
+- `--variety` : 4컷 결과 다름 `--v 0` ~ `--v 100` 높을수록 다양한 결과
 
-https://react-svgr.com/docs/next/
+## 전문성 평가, 개선
+
+`현재 사이트가 구식으로 보이는 요소들을 레이아웃, 컬러팔레트, 타이포그래피, 인터렉션, 콘텐츠 구성 측면에서 진단해줘. 이와 비슷한 2026년 웹 트렌드 디자인 특징 5가지와 비교해서 갭을 분석해봐.`
+
+## Contentful
+
+> Headless CMS(Content Management System)
+
+- 컨텐츠를 저장하고 관리하는 백엔드 기능만 제공
 
 
-* * *
 
-
-### TypeScript key값 타입 추출
+### 타입 key값으로 추출
 ```js
 export type NAME = (typeof 배열)[number]['name'];
 export type NAME = keyof typeof 객체
 ```
 
+## as / is
+### as (Type Assertion 타입 단언)
+- 컴파일 단계에서 타입스크립트가 감지하지 못하는 특정 변수에 대한 타입 **명확히** 명시
 
-### Node.js
+```ts
+// expr: string, T: number
+const a = expr as any as T
+```
+number 타입으로 억지로 바꾸고 싶을 때 두 번 써서 변경 가능
 
-`path` 파일 경로 계산 | &nbsp; 
-:----------------|:-----
-`path.join()`    | 여러 경로 조각 OS에 맞게 합침
-`path.resolve()` | 절대 경로 생성
-`path.dirname()` | 경로에서 dir 부분만 반환
-`path.basename(경로)` <br /> `path.basename(경로, '.확장자)`| 전체 경로에서 마지막부분(파일 명)만 추출 <br /> 파일명만 추출
-`path.extname()` | 파일 확장자만 추출
+### is (Type Guard)
+- 한정된 범위 내의 모든 변수에 대해 일괄적으로 적용
 
-`path` ES Module에서 사용시 | &nbsp;
-:---------------|:--------------------
-`import.meta.url` | 현재 모듈시스템 URL
-`fileURLToPath()` | URL 형태를 OS가 이해하는 경로로 변환 <br /> `file:///Users/...` &rightarrow; `/Users/...`
-`pathToFileURL()` | 파일 경로를 URL로 변환
+```ts
+function isString(someTest: any): someTest is string {
+  return someTest === 'string'
+}
+```
 
-- ES Module에서 보안, 표준 준수로 `__dirname` `__filename`을 제공하지 않기때문에 표준 공식 사용
+## useRef
+### userState와 비교
+| useState               | useRef                                      |
+| :--------------------- | :------------------------------------------ |
+| 값이 변경되면 리렌더링 | 값이 바뀌어도 리렌더링 하지않음 (값만 바뀜) |
 
+#### useRef 사용하는 곳
+1. DOM 직접 변경
+- focus, 스크롤 위치 계산, 외부 라이브러리 연결
 
-`fs` 파일 동기적 처리 | &nbsp;
-:--------------------|:-----
-`fs.readFileSync()`  | 파일 내용 읽기
-`fs.writeFileSync()` | 파일 만들기/내용 쓰기
-`fs.readdirSync()`   | 폴더 안의 파일 목록 가져오기
+```ts
+const inputRef = useRef<HTMLInputElement>(null)
+const handlSomeElement = () => {
+  inputRef.current?.focus() // 실제 DOM Element
+}
 
+return <input ref={inputRef} />
+```
+
+2. 변수 관리
+- setTimeout
