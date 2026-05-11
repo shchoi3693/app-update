@@ -6,11 +6,24 @@ summary: 'css, css trick'
 thumbnail: './gatsby-starter.jpg'
 ---
 
+> PostSQL 기반 오픈소스 BaaS(Backend as a Service) 플랫폼
+
+- Firebase 대안
+- 데이터 베이스, 사용자 인증, 실시간 데이터, 스토리지 등 기능 제공
+
 ## 설정 Next 16(App Router)
 ```bash
 pnpm add @supabase/ssr @supabase/supabase-js
 ```
-### lib/supabase 파일 분리
+
+### 환경변수
+```title=.env.local
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+- `NEXT_PUBLIC_` : 클라이언트 컴포넌트에서도 접근
+
+### 파일 분리 (lib/supabase)
 - `client.ts` : `use client` 컴포넌트 사용
 - `server.ts` : 서버 컴포넌트
 - `middleware.ts` : 루트에 위치, 세션 갱신
@@ -55,9 +68,9 @@ export async function createClient() {
   )
 }
 ```
-- `NEXT_PUBLIC_` : 클라이언트 컴포넌트에서도 접근
 
-## 스키마
+
+## 스키마 (PostgreSQL)
 &nbsp; | &nbsp;
 :----|:-----
 `UUID` | 고유 식별자
@@ -80,6 +93,43 @@ DROP FUNCTION IF EXISTS 함수 CASCADE;
 `.from('테이블 명')`  | 대상 테이블 지정
 `.select('column1, column2)` | 지정된 테이블의 column 선택 <br /> `.select(*)` 모든 column 선택
 `.eq('column', 'value')` | 지정한 값과 일치하는 데이터만 필터링
-`single()` | 결과 배열에서 객체 추출 <br /> 데이터 1 (0 이거나 2이상 에러)
-`maybeSingle()` | 데이터 0 또는 1 (2이상 에러) : 존재 여부 확인
+`.single()` | 결과 배열에서 객체 추출 <br /> 데이터 1 (0 이거나 2이상 에러)
+`.maybeSingle()` | 데이터 0 또는 1 (2이상 에러) : 존재 여부 확인
+`.insert()` | 데이터 추가, 객체형태로 전달 <br /> `.insert({name: 'new'})` <br /> `.insert([{name: 'new 1'}, {name: 'new 2'}])` <br /> `.insert({...}).select().single()` : 아이템 추가 후 리스트에 바로 보여줘야하는 경우
+`.upsert()` | Update + Insert 여러 데이터 한번에 추가
 
+
+## Supabase Auth UI
+> 로그인 라이브러리
+
+```bash
+pnpm add @supabase/auth-ui-react @supabase/auth-ui-shared
+```
+
+```tsx
+// 확인
+supabase.auth.getSession();
+// 로그아웃
+supabase.auth.signOut();
+```
+```tsx
+<Auth
+	supabaseClient={supabase}
+	appearance={테마}
+	// 로그인 방식
+	providers={['google', 'github']}
+	// Label
+	localization={{
+		variables: {
+			sign_in: {
+				email_label: '이메일 주소',
+				password_label: '비밀번호',
+				button_label: '로그인하기',
+			},
+			sign_up: {
+				button_label: '회원가입하기',
+			}
+		}
+	}}
+>
+```
