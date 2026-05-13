@@ -46,7 +46,6 @@ export const useAuthStore = create<AuthState>(set => ({
   setUserId: id => set({ userId: id }),
 }));
 ```
-
 ```tsx:title=src/providers/AuthProvider.tsx
 'use client';
 
@@ -55,7 +54,11 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = createClient();
+  /** const supabase = createClient();
+	 * 최상위 컨텍스트(provider), 컴포넌트 안에 있을경우 useEffect 사용
+	 * 하위 컴포넌트의 불필요한 리렌더링 방지 - 처음 마운트 될 때 한번만 실행
+	 */
+	const [supabase] = useState(() => createClient()); 
   const { setUserId } = useAuthStore();
   useEffect(() => {
     const initUser = async () => {
@@ -71,11 +74,35 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUserId(session?.user?.id || null);
+
+			switch (event) {
+				case 'SIGNED_IN':
+					break;
+				case 'SIGNED_OUT':
+					break;
+			}
     });
     return () => subscription.unsubscribe();
   }, [setUserId, supabase]);
 
   return <>{children}</>;
+}
+```
+```tsx:title=layout.tsx
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ko" className={`h-full antialiased`}>
+      <body className="min-h-full flex flex-col">
+        <TanstackProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </TanstackProvider>
+      </body>
+    </html>
+  );
 }
 ```
 

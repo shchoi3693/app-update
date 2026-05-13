@@ -91,7 +91,7 @@ DROP FUNCTION IF EXISTS 함수 CASCADE;
 &nbsp;               | &nbsp;
 :--------------------|:-----
 `.from('테이블 명')`  | 대상 테이블 지정
-`.select('column1, column2)` | 지정된 테이블의 column 선택 <br /> `.select(*)` 모든 column 선택
+`.select('column1, column2)` | 지정된 테이블의 column 선택 <br /> `.select()` `.select(*)` 모든 column 선택
 `.eq('column', 'value')` | 지정한 값과 일치하는 데이터만 필터링
 `.single()` | 결과 배열에서 객체 추출 <br /> 데이터 1 (0 이거나 2이상 에러)
 `.maybeSingle()` | 데이터 0 또는 1 (2이상 에러) : 존재 여부 확인
@@ -133,3 +133,60 @@ supabase.auth.signOut();
 	}}
 >
 ```
+- supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 next의 middleware 에 위임
+```ts:title=src/lib/supabase/middleware.ts
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+
+            response = NextResponse.next({
+              request,
+            });
+
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    },
+  );
+
+  return response;
+}
+```
+### `NextResponse`
+- 서버측 제어권 제공
+- Cookie get, set
+- Redirect : 로그인 시 페이지 이동
+- Rewrite : URL 그대로 유지하면서 내부 컨텐츠 변경
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- [Zustand 로그인 세션 관리]
