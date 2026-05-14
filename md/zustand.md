@@ -27,6 +27,8 @@ export const useSomeStore = create<Some>((set, get)=>{
 		setSomeId: id => set({ someId: id })
 	}
 })
+```
+```ts
 export default function SomeComponent() {
 	const {someId, setSomeId} = useSomeStore();
 }
@@ -54,26 +56,26 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  /** const supabase = createClient();
-	 * 최상위 컨텍스트(provider), 컴포넌트 안에 있을경우 useEffect 사용
-	 * 하위 컴포넌트의 불필요한 리렌더링 방지 - 처음 마운트 될 때 한번만 실행
-	 */
+	/** const supabase = createClient();
+		최상위 컨텍스트(provider), 컴포넌트 안에 있을경우 useEffect 사용
+		하위 컴포넌트의 불필요한 리렌더링 방지 - 처음 마운트 될 때 한번만 실행
+	*/
 	const [supabase] = useState(() => createClient()); 
-  const { setUserId } = useAuthStore();
-  useEffect(() => {
-    const initUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUserId(user?.id || null);
-    };
-    initUser();
+	const { setUserId } = useAuthStore();
+	useEffect(() => {
+		const initUser = async () => {
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+			setUserId(user?.id || null);
+		};
+		initUser();
 
-    // Auth 상태 변화 감지
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUserId(session?.user?.id || null);
+		// Auth 상태 변화 감지
+		const {
+			data: { subscription },
+		} = supabase.auth.onAuthStateChange((event, session) => {
+			setUserId(session?.user?.id || null);
 
 			switch (event) {
 				case 'SIGNED_IN':
@@ -81,11 +83,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 				case 'SIGNED_OUT':
 					break;
 			}
-    });
-    return () => subscription.unsubscribe();
-  }, [setUserId, supabase]);
+		});
+		return () => subscription.unsubscribe();
+	}, [setUserId, supabase]);
 
-  return <>{children}</>;
+	return <>{children}</>;
 }
 ```
 ```tsx:title=layout.tsx

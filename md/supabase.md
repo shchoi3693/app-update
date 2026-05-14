@@ -133,60 +133,45 @@ supabase.auth.signOut();
 	}}
 >
 ```
-- supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 next의 middleware 에 위임
+- supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 쿠키 set을 next의 middleware에 위임
 ```ts:title=src/lib/supabase/middleware.ts
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
+	let response = NextResponse.next({
+		request,
+	});
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
+	const supabase = createServerClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		{
+			cookies: {
+				getAll() {
+					return request.cookies.getAll();
+				},
 
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
+				setAll(cookiesToSet) {
+					cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+					response = NextResponse.next({
+						request,
+					});
+					cookiesToSet.forEach(({ name, value, options }) =>
+						response.cookies.set(name, value, options),
+					);
+				},
+			},
+		},
+	);
 
-            response = NextResponse.next({
-              request,
-            });
+	// 세션 체크
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    },
-  );
-
-  return response;
+	return { response, user };
 }
 ```
-### `NextResponse`
-- 서버측 제어권 제공
-- Cookie get, set
-- Redirect : 로그인 시 페이지 이동
-- Rewrite : URL 그대로 유지하면서 내부 컨텐츠 변경
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-- [Zustand 로그인 세션 관리]
+- [NextResponse](/nextresponse/#Supabase-사용자-확인)
+- [Zustand 로그인 세션 관리](/zustand/#Supabase-Auth-전역-관리)
