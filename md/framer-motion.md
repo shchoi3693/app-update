@@ -182,3 +182,6 @@ if(isOpen){
 }
 ```
 
+* * *
+[Framer 튜토리얼](https://blog.maximeheckel.com/posts/guide-animations-spark-joy-framer-motion/)  
+[Framer Motion 예제](https://motion.dev/examples)
