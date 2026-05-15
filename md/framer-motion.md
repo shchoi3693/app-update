@@ -101,12 +101,14 @@ const AniButton = () => {
 > 애니메이션 상태와 속도 추적
 
 - MotionValue 생성 후 inline 스타일에 정의
-- `useMotionValue` : MotionValue 정의 (style 속성명과 일치시키는게 관례)
-- `useTransform` : 다른 MotionValue로 변환, 맵핑
+- `.get()` `.set()` 매서드로 값 관리
+- `useMotionValue` MotionValue 정의 (style 속성명과 일치시키는게 관례)
+- `useTransform` 다른 MotionValue로 변환, 맵핑 	`useTransform(감지할 속성, 범위 맵핑, 변환 값)`
+- `useSpring` 최종 목표값으로 이동시 스프링 애니메이션
 ```tsx
-const x = useMotionValue(0)
-const opacity = useTransform(x, input, output)
-// x 의 input 상태 감지, opacity 상태를 x 상태에 맵핑하여 output 으로 정의
+const stylePropA = useMotionValue(0)
+const stypePropB = useTransform(x, input, output)
+// 감지할 stylePropA, [stylePropA 상태 값], [stylePropA 맵핑 후 stylePropB 변환 값]
 ```
 ```tsx
 const aniBox = {
@@ -224,5 +226,5 @@ if(isOpen){
 ```
 
 * * *
-[Framer 튜토리얼](https://blog.maximeheckel.com/posts/guide-animations-spark-joy-framer-motion/)  
-[Framer Motion 예제](https://motion.dev/examples)
+[Framer Motion 튜토리얼](https://blog.maximeheckel.com/posts/guide-animations-spark-joy-framer-motion/)  
+[Framer Motion Docs](https://motion.dev/docs)

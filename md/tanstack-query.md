@@ -60,7 +60,7 @@ queryKey:['데이터 키', userId, trackId]
 const queryClient = useQueryClient();
 // 기존 캐시 무효화 -> 새로 가져오기
 return useMutation({
-	mutationFn: async (key)=> {
+	mutationFn: async (data)=> {
 		...
 	},
 	onError:(error: any) => error,
