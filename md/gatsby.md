@@ -6,6 +6,68 @@ summary: ''
 thumbnail: './img1.jpg'
 ---
 
+## node-vibrant
+### Browser 빌드
+- `img` `canvas`로 로드해서 픽셀로 색상 추출
+```ts
+import { Vibrant } from 'node-vibrant/browser';
+const palette = await Vibrant.from(url).getPalette();
+```
+### Node 빌드
+```ts
+import { NextResponse } from 'next/server';
+import { Vibrant } from 'node-vibrant/node';
+
+export async function GET(request: Request) {
+  const url = new URL(request.url).searchParams.get('url');
+  if (!url) return NextResponse.json({ error: 'URL Error' }, { status: 400 });
+  try {
+    const data = await Vibrant.from(url).getPalette();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+```
+
+```ts:title=useTrack.ts
+return useMutation({
+	mutationFn: ()=>{
+		const palette = await Vibrant.from(track.artworkUrl100).getPalette();
+
+			palette: {
+				vibrant: palette.Vibrant?.hex,
+				muted: palette.Muted?.hex,
+				darkVibrant: palette.DarkVibrant?.hex,
+				lightVibrant: palette.LightVibrant?.hex,
+				darkMuted: palette.DarkMuted?.hex,
+				lightMuted: palette.LightMuted?.hex,
+			},
+
+	}
+})
+
+export default function Componenet({track}: Props){
+	style={{
+	background: `linear-gradient(to right, ${track.palette?.darkVibrant}, ${track.palette?.darkMuted})`,
+	}}
+}
+
+```
+```sql
+ALTER TABLE playlist_tracks
+ADD COLUMN IF NOT EXISTS palette JSONB;
+```
+```ts
+palette: {
+	vibrant?: string;
+	muted?: string;
+	darkVibrant?: string;
+	darkMuted?: string;
+	lightVibrant?: string;
+	lightMuted?: string;
+} | null;
+```
 
 ## Circle Percent
 

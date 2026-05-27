@@ -107,7 +107,7 @@ const AniButton = () => {
 - `useSpring` 최종 목표값으로 이동시 스프링 애니메이션
 ```tsx
 const stylePropA = useMotionValue(0)
-const stypePropB = useTransform(x, input, output)
+const stylePropB = useTransform(x, input, output)
 // 감지할 stylePropA, [stylePropA 상태 값], [stylePropA 맵핑 후 stylePropB 변환 값]
 ```
 ```tsx
