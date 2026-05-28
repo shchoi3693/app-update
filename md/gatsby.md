@@ -14,7 +14,9 @@ import { Vibrant } from 'node-vibrant/browser';
 const palette = await Vibrant.from(url).getPalette();
 ```
 ### Node 빌드
-```ts
+- DOM이 없으니 별도의 디코딩 라이브러리로 색상 추출
+- 서버가 직접 fetch하기 때문에 CORS 무관
+```ts:title=app/api/palette/route.ts
 import { NextResponse } from 'next/server';
 import { Vibrant } from 'node-vibrant/node';
 
@@ -22,37 +24,65 @@ export async function GET(request: Request) {
   const url = new URL(request.url).searchParams.get('url');
   if (!url) return NextResponse.json({ error: 'URL Error' }, { status: 400 });
   try {
-    const data = await Vibrant.from(url).getPalette();
-    return NextResponse.json(data);
+    const palette = await Vibrant.from(url).getPalette();
+
+    // 메서드(palette Swatch) JSON 변환되며 사라짐, 필요한 hex값만 추출
+    return NextResponse.json({
+      vibrant: palette.Vibrant?.hex,
+      muted: palette.Muted?.hex,
+      darkVibrant: palette.DarkVibrant?.hex,
+      lightVibrant: palette.LightVibrant?.hex,
+      darkMuted: palette.DarkMuted?.hex,
+      lightMuted: palette.LightMuted?.hex,
+    });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 ```
 
-```ts:title=useTrack.ts
+```ts:title=app/hooks/useTrack.ts
 return useMutation({
-	mutationFn: ()=>{
+	mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
+		// Browser 빌드 시
 		const palette = await Vibrant.from(track.artworkUrl100).getPalette();
+		return trackService.addTrackToPlaylist({
+			userId,
+			newTrack:{
+				...
+				palette: {
+					vibrant: palette.Vibrant?.hex,
+					muted: palette.Muted?.hex,
+					darkVibrant: palette.DarkVibrant?.hex,
+					lightVibrant: palette.LightVibrant?.hex,
+					darkMuted: palette.DarkMuted?.hex,
+					lightMuted: palette.LightMuted?.hex,
+				},
+			}
+		})
 
-			palette: {
-				vibrant: palette.Vibrant?.hex,
-				muted: palette.Muted?.hex,
-				darkVibrant: palette.DarkVibrant?.hex,
-				lightVibrant: palette.LightVibrant?.hex,
-				darkMuted: palette.DarkMuted?.hex,
-				lightMuted: palette.LightMuted?.hex,
-			},
+    // Node 빌드 시
+    const paletteRes = await fetch(`/api/palette?url=${encodeURIComponent(track.artworkUrl100)}`);
+    if(!paletteRes.ok) throw new Error('vibrant error');
+    const palette = await paletteRes.json();
 
+    return trackService.addTrackToPlaylist({
+      userId,
+      newTrack: {
+        ...
+        palette
+      }
+    })
 	}
 })
-
+```
+```ts
 export default function Componenet({track}: Props){
-	style={{
-	background: `linear-gradient(to right, ${track.palette?.darkVibrant}, ${track.palette?.darkMuted})`,
-	}}
+  style={{
+    background: `linear-gradient(to right, ${track.palette?.darkVibrant}, ${track.palette?.darkMuted})`,
+  }}
 }
-
 ```
 ```sql
 ALTER TABLE playlist_tracks
@@ -67,6 +97,40 @@ palette: {
 	lightVibrant?: string;
 	lightMuted?: string;
 } | null;
+```
+
+```ts
+mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
+  const searchQuery = `${track.trackName} ${track.artistName} official`;
+
+  const [ytbResult, paletteResult] = await Promise.allSettled([
+    fetch(`/api/youtube?q=${encodeURIComponent(searchQuery)}`).then((res) => {
+      if (!res.ok) throw new Error('ytbApi error');
+      return res.json();
+    }),
+    fetch(`/api/palette?url=${encodeURIComponent(track.artworkUrl100)}`).then((res) => {
+      if (!res.ok) throw new Error('vibrant Error');
+      return res.json();
+    }),
+  ]);
+
+  const ytbId =
+    ytbResult.status === 'fulfilled' ? ytbResult.value.id?.videoId : undefined;
+  const palette =
+    paletteResult.status === 'fulfilled' ? paletteResult.value : null;
+
+  return trackService.addTrackToPlaylist({
+    userId,
+    newTrack: {
+      album_name: track.collectionName,
+      artist_name: track.artistName,
+      title: track.trackName,
+      image_url: track.artworkUrl100,
+      palette,
+      youtube_video_id: ytbId,
+    },
+  });
+},
 ```
 
 ## Circle Percent
