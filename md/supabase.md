@@ -99,49 +99,20 @@ DROP FUNCTION IF EXISTS 함수 CASCADE;
 `.upsert()` | Update + Insert 여러 데이터 한번에 추가
 
 
-## Supabase Auth UI
-> 로그인 라이브러리
+## Next 16 + Supabase Auth
 
-```bash
-pnpm add @supabase/auth-ui-react @supabase/auth-ui-shared
-```
-
-```tsx
-// 확인
-supabase.auth.getSession();
-// 로그아웃
-supabase.auth.signOut();
-```
-```tsx
-<Auth
-	supabaseClient={supabase}
-	appearance={테마}
-	// 로그인 방식
-	providers={['google', 'github']}
-	// Label
-	localization={{
-		variables: {
-			sign_in: {
-				email_label: '이메일 주소',
-				password_label: '비밀번호',
-				button_label: '로그인하기',
-			},
-			sign_up: {
-				button_label: '회원가입하기',
-			}
-		}
-	}}
->
-```
+### 1. middleware
+#### Supabase middleware 헬퍼
 - supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 쿠키 set을 next의 middleware에 위임
+- 인증 토큰 확인, 갱신
+- 쿠키 토큰 검사 후 [NextResponse](/nextresponse) 객체 받기 
 ```ts:title=src/lib/supabase/middleware.ts
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
-	let response = NextResponse.next({
-		request,
-	});
+	// 토큰 갱신 시 다시 set
+	let supabaseResponse = NextResponse.next({ request });
 
 	const supabase = createServerClient(
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -152,11 +123,12 @@ export async function updateSession(request: NextRequest) {
 					return request.cookies.getAll();
 				},
 
+				// 토큰 갱신 시 Supabase가 자동 호출 (getUser())
 				setAll(cookiesToSet) {
-					cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
-					response = NextResponse.next({
-						request,
-					});
+					cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+					// 객체 새로 만들기
+					supabaseResponse = NextResponse.next({ request });
+					// 쿠키 set
 					cookiesToSet.forEach(({ name, value, options }) =>
 						response.cookies.set(name, value, options),
 					);
@@ -165,13 +137,264 @@ export async function updateSession(request: NextRequest) {
 		},
 	);
 
-	// 세션 체크
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	// 세션 갱신 (만료 시 자동 refresh)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-	return { response, user };
+  // 보호 라우트 처리
+  const { pathname } = request.nextUrl; // 현재 사용자가 요청한 경로
+  const isPublic =
+    pathname === '/' || pathname.startsWith('/signup') || pathname.startsWith('/login');
+  const isAuthPage = pathname.startsWith('/signup') || pathname.startsWith('/login');
+
+  if ((!user && !isPublic) || (user && isAuthPage)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
 }
 ```
-- [NextResponse](/nextresponse/#Supabase-사용자-확인)
-- [Zustand 로그인 세션 관리](/zustand/#Supabase-Auth-전역-관리)
+- `request.url` "https://..." (string)
+- `request.nextUrl` NextURL 객체  
+  - `request.nextUrl.clone()` 원본 URL 객체를 복사한 뒤 수정 &rightarrow; 도메인, 프로토콜 자동으로 유지, 원본이 오염되지 않음
+
+#### next middleware
+```ts:title=src/middleware.ts
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * 제외:
+     * - _next/static
+     * - _next/image
+     * - favicon.ico
+     * - 이미지 확장자
+     * - .well-known
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
+```
+
+### 2. Server Actions
+- form 제출 처리, 상태 반환
+```
+NEXT_PUBLIC_SITE_URL=http://localhost:3000        # 개발
+NEXT_PUBLIC_SITE_URL=https://myapp.com            # 배포
+```
+```ts:title=src/app/auth/actions.ts
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+
+export async function signUp(formData: FormData) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signUp({
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  });
+  if (error) redirect('/signup?error=' + error.message);
+  redirect('/signup?message=check_email');
+}
+
+export async function login(formData: FormData) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  });
+  if (error) redirect('/login?error=' + error.message);
+  redirect('/');
+}
+
+export async function loginWithGoogle() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
+  });
+  if (data.url) redirect(data.url);
+}
+
+export async function logout() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/');
+}
+```
+#### OAuth (Google Auth)
+- 소셜 로그인
+- 각 인증 마친 후 redirect `(auth/callback?code=XXXX)`
+```ts:title=src/app/auth/callback/route.ts
+import { createClient } from '@/lib/supabase/server';
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url); // origin: redirect 주소
+  const code = searchParams.get('code'); // XXXX
+  const next = searchParams.get('next') ?? '/';
+
+  if (code) {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code); // access token + refresh token 교환, 쿠키 저장
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+  }
+
+  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+```
+- `login` `loginWithGoogle` 비교  
+  - 사용자 &rightarrow; Supabase 세션 발급  
+  - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환, 쿠키 저장 (`exchangeCodeForSession`)
+
+### 3. Server Component
+```tsx:title=src/app/page.tsx
+import { createClient } from '@/lib/supabase/server';
+
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+ 
+  ...
+}
+```
+
+### 4. Client Component
+```tsx:title=src/providers/AuthProvider.tsx
+'use client';
+
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
+
+const AuthContext = createContext<{ user: User | null } | null>(null); // 전역 state 관리
+
+export default function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null); // user state
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user); // 쿠키에 세션 있으면 User, 없으면 null
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe(); // unmount 시 subscription 해제
+  }, []);
+
+  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+}
+
+export function useUser() {
+  return useContext(AuthContext); // 전역 state 값 꺼내기
+}
+```
+- `createContext` 전역 State (user) 관리
+- `onAuthStateChange((event, session)=>{})`  
+  - `'INITIAL_SESSION', 'SIGNED_IN', ...` 각 이벤트
+  - `session.user` state 업데이트
+
+### 5. Pages
+#### 로그인, 회원가입
+```tsx:title=src/app/login/page.tsx
+import { login } from '@/app/auth/actions';
+import Link from 'next/link';
+
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  return (
+    <>
+      <form action={login}>
+        <input type="email" name="email" placeholder="이메일" required />
+        <input type="password" name="password" placeholder="비밀번호" required />
+        <button type="submit">Login</button>
+      </form>
+      {error && <p className="text-red-500">{error}</p>}
+
+      <Link href="/signup">Sign up</Link>
+    </>
+  );
+}
+```
+```tsx:title=src/app/signup/page.tsx
+import { signUp } from '@/app/auth/actions';
+
+export default async function Signup({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
+  const { error, message } = await searchParams;
+  return (
+    <>
+      <form action={signUp}>
+        <input type="email" name="email" placeholder="이메일" required />
+        <input type="password" name="password" placeholder="비밀번호" required />
+
+        {error && <p className="text-red-500">{error}</p>}
+        {message === 'check_email' && <p className="text-red-500">확인</p>}
+        <button type="submit">가입</button>
+      </form>
+    </>
+  );
+}
+```
+#### Sub pages
+- server 에서 props로 직접 전달
+```tsx:title=src/app/playlist/page.tsx
+import Search from '@/components/search/Search';
+import Turntable from '@/components/turntable/Turntable';
+import AlbumCoverList from '@/components/AlbumCoverList';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+
+export default async function Playlist() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect('/');
+  return (
+    <div>
+      <Search userId={user.id} />
+      <AlbumCoverList userId={user.id} />
+      <Turntable />
+    </div>
+  );
+}
+```
+```tsx
+export default function Search({ userId }: { userId: string }) {}
+```
+    
+    
+    
+
+
+

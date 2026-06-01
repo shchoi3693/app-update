@@ -16,7 +16,7 @@ const palette = await Vibrant.from(url).getPalette();
 ### Node 빌드
 - DOM이 없으니 별도의 디코딩 라이브러리로 색상 추출
 - 서버가 직접 fetch하기 때문에 CORS 무관
-```ts:title=app/api/palette/route.ts
+```ts:title=src/app/api/palette/route.ts
 import { NextResponse } from 'next/server';
 import { Vibrant } from 'node-vibrant/node';
 
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 }
 ```
 
-```ts:title=app/hooks/useTrack.ts
+```ts:title=src/app/hooks/useTrack.ts
 return useMutation({
 	mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
 		// Browser 빌드 시
@@ -89,35 +89,38 @@ ALTER TABLE playlist_tracks
 ADD COLUMN IF NOT EXISTS palette JSONB;
 ```
 ```ts
-palette: {
-	vibrant?: string;
-	muted?: string;
-	darkVibrant?: string;
-	darkMuted?: string;
-	lightVibrant?: string;
-	lightMuted?: string;
-} | null;
+export interface PlaylistTrack {
+  ...
+  palette: {
+    vibrant?: string;
+    muted?: string;
+    darkVibrant?: string;
+    darkMuted?: string;
+    lightVibrant?: string;
+    lightMuted?: string;
+  } | null;
+  youtube_video_id: string;
+  ...
+}
 ```
 
-```ts
+```ts:title=src/hooks/useTrack.ts
 mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
   const searchQuery = `${track.trackName} ${track.artistName} official`;
 
   const [ytbResult, paletteResult] = await Promise.allSettled([
     fetch(`/api/youtube?q=${encodeURIComponent(searchQuery)}`).then((res) => {
-      if (!res.ok) throw new Error('ytbApi error');
+      if (!res.ok) throw new Error('Youtube Api Fetch error');
       return res.json();
     }),
     fetch(`/api/palette?url=${encodeURIComponent(track.artworkUrl100)}`).then((res) => {
-      if (!res.ok) throw new Error('vibrant Error');
+      if (!res.ok) throw new Error('Vibrant Api Fetch error');
       return res.json();
     }),
   ]);
 
-  const ytbId =
-    ytbResult.status === 'fulfilled' ? ytbResult.value.id?.videoId : undefined;
-  const palette =
-    paletteResult.status === 'fulfilled' ? paletteResult.value : null;
+  const ytbId = ytbResult.status === 'fulfilled' ? ytbResult.value.id?.videoId : undefined;
+  const palette = paletteResult.status === 'fulfilled' ? paletteResult.value : null;
 
   return trackService.addTrackToPlaylist({
     userId,
