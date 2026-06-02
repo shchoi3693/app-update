@@ -264,7 +264,7 @@ export async function GET(request: Request) {
   - 사용자 &rightarrow; Supabase 세션 발급  
   - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환(`exchangeCodeForSession`)
 
-### 3. Server Component 에서 유저정보 가져오기
+### 3. Server Component에서 유저정보 가져오기
 ```tsx:title=src/app/page.tsx
 import { createClient } from '@/lib/supabase/server';
 
@@ -278,47 +278,7 @@ export default async function Home() {
 }
 ```
 
-### 4. Client Component 에서 유저정보 가져오기
-- provider 전역 설정
-```tsx:title=src/providers/AuthProvider.tsx
-'use client';
-
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
-
-const AuthContext = createContext<{ user: User | null } | null>(null); // 전역 state 관리
-
-export default function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = createClient();
-  const [user, setUser] = useState<User | null>(null); // user state
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user); // 쿠키에 세션 있으면 User, 없으면 null
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe(); // unmount 시 subscription 해제
-  }, []);
-
-  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
-}
-
-export function useUser() {
-  return useContext(AuthContext); // 전역 state 값 꺼내기
-}
-```
-- `createContext` 전역 State (user) 관리
-- `onAuthStateChange((event, session)=>{})`  
-  - `'INITIAL_SESSION', 'SIGNED_IN', ...` 각 이벤트
-  - `session.user` state 업데이트
-
-### 5. Pages
+### 4. Pages
 #### 로그인, 회원가입
 ```tsx:title=src/app/login/page.tsx
 import { login } from '@/app/auth/actions';
@@ -368,7 +328,7 @@ export default async function Signup({
 }
 ```
 #### Sub pages
-- server 에서 props로 직접 전달
+- Server Component에서 props로 직접 전달
 ```tsx:title=src/app/playlist/page.tsx
 import Search from '@/components/search/Search';
 import Turntable from '@/components/turntable/Turntable';
@@ -395,9 +355,64 @@ export default async function Playlist() {
 ```tsx
 export default function Search({ userId }: { userId: string }) {}
 ```
-    
-    
-    
+
+### 5. Client에서 유저정보 가져오기 (AuthProvider)
+- provider 전역 설정, 상태 관리
+- 인증 상태 전환 UI (로그인/로그아웃 이벤트 감지)
+```tsx:title=layout.tsx
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ko" className={`h-full antialiased`}>
+      <body className="min-h-full flex flex-col">
+        <TanstackProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </TanstackProvider>
+      </body>
+    </html>
+  );
+}
+```
+```tsx:title=src/providers/AuthProvider.tsx
+'use client';
+
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
+
+const AuthContext = createContext<{ user: User | null } | null>(null); // 전역 state 관리
+
+export default function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null); // user state
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user); // 쿠키에 세션 있으면 User, 없으면 null
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe(); // unmount 시 subscription 해제
+  }, []);
+
+  return <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>;
+}
+
+export function useUser() {
+  return useContext(AuthContext); // 전역 state 값 꺼내기
+}
+```
+- `createContext` 전역 State (user) 관리
+- `onAuthStateChange((event, session)=>{})`  
+  - `'INITIAL_SESSION', 'SIGNED_IN', ...` 각 이벤트
+  - `session.user` state 업데이트
 
 
 
