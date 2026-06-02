@@ -8,7 +8,7 @@ thumbnail: './gatsby-starter.jpg'
 
 > Next 13 이상에서 API 라우트 작성 시 사용
 
-- middleware(서버측 제어권 제공), API Route에서 주로 사용
+- API Route, middleware 에서 사용
 - Cookie get, set
 
 Method              | &nbsp;
@@ -19,7 +19,8 @@ Method              | &nbsp;
 `NextResponse.cookies.set(name, value)` | &nbsp;
 `NextResponse.cookies.get(name)` | &nbsp;
 
-## API Route
+## 사용예시
+### API Route
 ```ts
 import { NextResponse } from 'next/server';
 

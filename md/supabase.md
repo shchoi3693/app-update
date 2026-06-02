@@ -160,6 +160,8 @@ export async function updateSession(request: NextRequest) {
 - `request.url` "https://..." (string)
 - `request.nextUrl` NextURL 객체  
   - `request.nextUrl.clone()` 원본 URL 객체를 복사한 뒤 수정 &rightarrow; 도메인, 프로토콜 자동으로 유지, 원본이 오염되지 않음
+- `getSession` Client 측 확인, 반복적 조회해야하는 경우
+- `getUser` Server 측 확인, 항상 최신의 인증 정보 제공, 보안 강화
 
 #### next middleware
 ```ts:title=src/middleware.ts
@@ -260,9 +262,9 @@ export async function GET(request: Request) {
 ```
 - `login` `loginWithGoogle` 비교  
   - 사용자 &rightarrow; Supabase 세션 발급  
-  - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환, 쿠키 저장 (`exchangeCodeForSession`)
+  - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환(`exchangeCodeForSession`)
 
-### 3. Server Component
+### 3. Server Component 에서 유저정보 가져오기
 ```tsx:title=src/app/page.tsx
 import { createClient } from '@/lib/supabase/server';
 
@@ -276,7 +278,8 @@ export default async function Home() {
 }
 ```
 
-### 4. Client Component
+### 4. Client Component 에서 유저정보 가져오기
+- provider 전역 설정
 ```tsx:title=src/providers/AuthProvider.tsx
 'use client';
 
