@@ -193,6 +193,8 @@ export const config = {
 NEXT_PUBLIC_SITE_URL=http://localhost:3000        # 개발
 NEXT_PUBLIC_SITE_URL=https://myapp.com            # 배포
 ```
+
+#### 1. URL 쿼리 파라미터
 ```ts:title=src/app/auth/actions.ts
 'use server';
 
@@ -238,6 +240,116 @@ export async function logout() {
   redirect('/');
 }
 ```
+
+#### 2. useActionState 사용
+> React 19 이상 폼 처리 방식  
+> Server Action 에러 객체 반환, 클라이언트에서 Hook으로 받아 처리
+- React 18 이전 `useFormState`
+
+```tsx
+export async function login(prevState, formData){ // (이전 상태, FormData)
+  ...
+}
+```
+```tsx
+const [state, formAction, isPending] = useActionState(login, initialState) // (실행할 Server Action, 초기 상태값)
+```
+
+- 사용 예시
+```ts:title=src/app/auth/action.ts
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+
+export type FormState = {
+  error?: string;
+  payload?: {
+    email?: string;
+  };
+};
+
+export async function signup(prevState: FormState, formData: FormData) {
+  const supabase = await createClient();
+
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return { error: 'empty', payload: { email } };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { error: 'email_vallid', payload: { email } };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (error) return { error: error.code, payload: { email } };
+
+  if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+    return { error: 'email_exists', payload: { email } };
+  }
+
+  redirect('/');
+}
+```
+```tsx:title=src/app/signup/page.tsx
+'use client';
+
+import { FormState, signup } from '@/app/auth/actions';
+import { useActionState } from 'react';
+
+const SIGNUP_ERROR_MSG: Record<string, string> = {
+  empty: '입력하세요',
+  AuthWeakPasswordError: '1',
+  weak_password: '8자 이상',
+  email_exists: '이미 가입',
+  email_vallid: '이메일 형식이 올바르지 않습니다.',
+  email_address_invalid: '사용할 수 없는 이메일 주소입니다.',
+  over_email_send_rate_limit: 'limit',
+};
+
+export default function SignupPage() {
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(signup, {
+    error: undefined,
+    payload: { email: '' },
+  });
+  console.log(state?.error);
+  const errorMsg = state?.error
+    ? SIGNUP_ERROR_MSG[state.error] || '회원가입 중 오류가 발생했습니다.'
+    : null;
+
+  return (
+    <>
+      <form action={formAction}>
+        <div>
+          <input
+            type="text"
+            name="email"
+            placeholder="이메일"
+            defaultValue={state?.payload?.email || ''}
+          />
+        </div>
+        <div>
+          <input type="password" name="password" placeholder="비밀번호" />
+        </div>
+
+        <div className="mt-10">
+          <button type="submit" disabled={isPending} className="bg-brand-500 w-full">
+            가입
+          </button>
+        </div>
+        <div className="mt-10">{errorMsg && <p className="text-red-500">{errorMsg}</p>}</div>
+      </form>
+    </>
+  );
+}
+```
+
 #### OAuth (Google Auth)
 - 소셜 로그인
 - 각 인증 마친 후 redirect `(auth/callback?code=XXXX)`
@@ -263,6 +375,7 @@ export async function GET(request: Request) {
 - `login` `loginWithGoogle` 비교  
   - 사용자 &rightarrow; Supabase 세션 발급  
   - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환(`exchangeCodeForSession`)
+
 
 ### 3. Server Component에서 유저정보 가져오기
 ```tsx:title=src/app/page.tsx
