@@ -36,4 +36,27 @@ export default function SomeComponent() {
 ```
 
 ## Turntable 전역 상태관리
+### 스토어 생성
+```ts:title=src/store/usePlayerStore.ts
+import { PlaylistTrack } from '@/types/playlist';
+import { create } from 'zustand';
+
+interface PlayerState {
+	activeTrack: PlaylistTrack | null;
+	setActiveTrack: (track: PlaylistTrack | null) => void;
+}
+
+export const usePlayerStore = create<PlayerState>(set => ({
+	activeTrack: null,
+	setActiveTrack: track => set({ activeTrack: track }),
+}))
+```
+### Client 사용
+```tsx
+const activeTrack = usePlayerStore(state => state.activeTrack);
+const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
+```
+
+
+
 

@@ -26,7 +26,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ### 파일 분리 (lib/supabase)
 - `client.ts` : `use client` 컴포넌트 사용
 - `server.ts` : 서버 컴포넌트
-- `middleware.ts` : 루트에 위치, 세션 갱신
+- `middleware.ts` : 세션 갱신
 
 ```ts:title=src/lib/supabase/client.ts
 import { createBrowserClient } from '@supabase/ssr'
@@ -163,12 +163,12 @@ export async function updateSession(request: NextRequest) {
 - `getSession` Client 측 확인, 반복적 조회해야하는 경우
 - `getUser` Server 측 확인, 항상 최신의 인증 정보 제공, 보안 강화
 
-#### next middleware
-```ts:title=src/middleware.ts
+#### Next 16 Proxy (middleware)
+```ts:title=src/proxy.ts
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
@@ -529,3 +529,51 @@ export function useUser() {
 
 
 
+```ts
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  // 세션 체크
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const isPublic =
+    pathname === '/' || pathname.startsWith('/signup') || pathname.startsWith('/login');
+
+  const isAuthPage = pathname.startsWith('/signup') || pathname.startsWith('/login');
+  if ((!user && !isPublic) || (user && isAuthPage)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
+}
+
+
+```
