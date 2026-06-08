@@ -2,10 +2,11 @@
 
 import { usePlaylist } from '@/hooks/usePlaylist';
 import { usePlaylistTrack } from '@/hooks/useTrack';
-import { animate, AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { animate, motion, useMotionValue } from 'framer-motion';
+import { useCallback } from 'react';
 import AlbumCover from './AlbumCover';
 import Turntable from './turntable/Turntable';
+import { usePlayerStore } from '@/store/usePlayerStore';
 
 export default function AlbumCoverList({ userId }: { userId: string }) {
   const {
@@ -19,37 +20,34 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
     isLoading: isTracksLoading,
     isError: isTracksError,
   } = usePlaylistTrack({ user_id: userId, playlist_id: playlistId });
-  const [openTrackId, setOpenTrackId] = useState<string | null>(null);
+
+  const listHeight = 160;
   const y = useMotionValue(0);
-
-  const albumSize = 160;
-
+  const selectedItem = useCallback(
+    (index: number) => () => {
+      animate(y, listHeight * index, {
+        type: 'spring',
+        stiffness: 200,
+        damping: 20,
+        mass: 0.8,
+      });
+    },
+    [y],
+  );
   if (isPlaylistLoading) return <div>P Loading</div>;
   if (isPlaylistError || isTracksError) return <>Error</>;
   if (isTracksLoading) return <>T Loading</>;
   if (!tracks || tracks.length === 0) return <>0 Plyalist</>;
 
-  const maxDrag = (tracks.length - 1) * albumSize;
-  const centerItem = (index: number) => {
-    animate(y, albumSize * index, {
-      type: 'spring',
-      stiffness: 200,
-      damping: 20,
-      mass: 0.8,
-    });
-  };
+  const maxDrag = (tracks.length - 1) * listHeight;
 
   return (
-    <div className="absolute inset-0 overflow-hidden border border-gray-300">
-      <div className="absolute inset-0 my-[20vw]">
-        {/* -rotate-45  my-auto*/}
+    <div className="fixed inset-0 overflow-hidden border border-gray-300">
+      <div className="absolute inset-0 mb-30">
         <motion.div
           drag="y"
           className="absolute inset-0 m-auto flex cursor-grab flex-col-reverse"
-          //  flex-col items-center rotate-45
           style={{ y }}
-          //dragConstraints={containerRef}
-          //dragElastic={1}
           dragConstraints={{ top: 0, bottom: maxDrag }}
           dragElastic={0.2}
         >
@@ -60,20 +58,12 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
               track={track}
               index={index}
               y={y}
-              onClick={() => centerItem(index)}
-              onOpen={() => setOpenTrackId(track.id)}
+              onTap={selectedItem(index)}
             />
           ))}
         </motion.div>
 
-        <AnimatePresence>
-          {openTrackId && (
-            <Turntable
-              track={tracks.find(t => t.id === openTrackId)!}
-              onClose={() => setOpenTrackId(null)}
-            />
-          )}
-        </AnimatePresence>
+        <Turntable />
       </div>
     </div>
   );
