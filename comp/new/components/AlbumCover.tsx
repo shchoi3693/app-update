@@ -8,10 +8,9 @@ import {
   useMotionValue,
   useMotionValueEvent,
   useTransform,
-  Variants,
 } from 'framer-motion';
 import Image from 'next/image';
-import { MouseEvent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePlayerStore } from '@/store/usePlayerStore';
 
 interface Props {
@@ -38,13 +37,13 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
   const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
 
   const scale = useTransform(y, inputValues, [0.7, 1, 0.8, 0.7, 0.6, 0.6]);
-
   const trackIndex = totalTracks - index;
   const zIndex = useTransform(y, inputValues.slice(0, 3), [trackIndex, 100, trackIndex]);
-
-  const isActiveTrack = activeTrack?.id === track?.id;
   const transformedX = useTransform(y, inputValues, [0, 100, 150, 200, 250, 300]);
   const x = useMotionValue(transformedX.get());
+  const transformedIndex = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
+
+  const isActiveTrack = activeTrack?.id === track?.id;
 
   useMotionValueEvent(transformedX, 'change', latest => {
     if (!activeTrack) {
@@ -52,10 +51,20 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
     }
   });
   useEffect(() => {
+    const indexValue = transformedIndex.get();
+
     if (!activeTrack) {
-      animate(x, transformedX.get(), { type: 'spring', stiffness: 150, damping: 20 + index * 2 });
+      animate(x, transformedX.get(), {
+        type: 'spring',
+        stiffness: 100 + indexValue * 10,
+        damping: 24 - indexValue,
+      });
     } else if (!isActiveTrack) {
-      animate(x, -500, { type: 'spring', stiffness: 100, damping: 25 });
+      animate(x, -400, {
+        type: 'spring',
+        stiffness: indexValue * 40,
+        damping: 22 - indexValue,
+      });
     }
   }, [activeTrack, isActiveTrack]);
 
@@ -70,12 +79,13 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
         zIndex,
         x,
       }}
-      transition={{ duration: 0.3 }}
     >
       <motion.div
         layoutId={`album-${track.id}`}
-        className="h-50 w-50"
         style={{
+          width: 180,
+          height: 180,
+          rotate: 0,
           background: `linear-gradient(to right, ${track.palette?.vibrant}, ${track.palette?.darkVibrant})`,
         }}
       >
@@ -87,7 +97,7 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
             setActiveTrack(track);
           }}
         >
-          Go
+          Play
         </button>
       </motion.div>
     </motion.div>

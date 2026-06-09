@@ -94,7 +94,47 @@ export default function Componenet({track}: Props){
 }
 ```
 
+## 축 Interacte
+- `Math.atan2(y, x)` : 0 ~ PI 값 &rightarrow; deg 값 `180 / Math.PI` 
+```tsx
+const currentAngle = Math.floor(
+  // atan2(현재 포인트 좌표 - 기준 축)
+  (Math.atan2(currentY - pivotY, currentX - pivotX) * 180) / Math.PI,
+);
+```
 
+- Framer Motion [onPan] 사용
+- [useSpring]
+- `PanInfo` 사용하여 현재 포인트 좌표 값 가져오기
+```tsx
+const pinWrapper = useRef<HTMLDivElement>(null);
+const rotateRaw = useMotionValue(0);
+const rotate = useSpring(rotateRaw, { stiffness: 500, damping: 30 });
+
+const startAngle = useRef(0);
+const pivotX = useRef(0);
+const pivotY = useRef(0);
+const getAngle = (x: number, y: number) =>
+  Math.floor((Math.atan2(y - pivotY.current, x - pivotX.current) * 180) / Math.PI);
+
+const handlePinStart = (event: PointerEvent, info: PanInfo) => {
+  if (!pinWrapper.current) return;
+
+  const rect = pinWrapper.current.getBoundingClientRect();
+  pivotX.current = rect.left + rect.width / 2;
+  pivotY.current = rect.top;
+
+  startAngle.current = getAngle(info.point.x, info.point.y) - rotateRaw.get();
+};
+
+const handlePin = (event: PointerEvent, info: PanInfo) => {
+  if (!pinWrapper.current) return;
+
+  let deg = getAngle(info.point.x, info.point.y) - startAngle.current;
+  deg = Math.max(0, Math.min(30, deg));
+  rotateRaw.set(deg);
+};
+```
 
 
 

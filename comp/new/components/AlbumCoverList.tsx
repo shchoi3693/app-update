@@ -6,7 +6,6 @@ import { animate, motion, useMotionValue } from 'framer-motion';
 import { useCallback } from 'react';
 import AlbumCover from './AlbumCover';
 import Turntable from './turntable/Turntable';
-import { usePlayerStore } from '@/store/usePlayerStore';
 
 export default function AlbumCoverList({ userId }: { userId: string }) {
   const {
@@ -43,7 +42,7 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
 
   return (
     <div className="fixed inset-0 overflow-hidden border border-gray-300">
-      <div className="absolute inset-0 mb-30">
+      <div className="absolute inset-0 mb-40">
         <motion.div
           drag="y"
           className="absolute inset-0 m-auto flex cursor-grab flex-col-reverse"

@@ -135,6 +135,12 @@ return(
 	</>
 )
 ```
+```tsx
+const scale = useSpring(scale, { stiffness: 200, damping: 10 })
+```
+- stiffness : 목표에 도달하는 속도
+- damping : spring 효과 (낮을수록 효과 증가)
+- Raw 데이터를 실시간으로 필터링 (사용예시 마우스 포인터 추적, 스크롤 진척도 연동)
 
 ## Delay
 ```tsx
