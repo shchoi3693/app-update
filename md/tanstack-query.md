@@ -8,7 +8,7 @@ thumbnail: './gatsby-starter.jpg'
 
 > 서버로부터 데이터 가져오기, 캐싱, 캐싱제어
 
-## Next.js 캐싱 비교
+## Next.js 캐싱과 차이점
 &nbsp;   | Next.js | TanStack Query
 :--------|:--------|:--------------
 &nbsp;   | `fetch(url, {next: revalidate})` | `staleTime`

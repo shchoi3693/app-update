@@ -52,11 +52,23 @@ export const usePlayerStore = create<PlayerState>(set => ({
 }))
 ```
 ### Client 사용
+- 불필요한 리렌더링 방지
 ```tsx
 const activeTrack = usePlayerStore(state => state.activeTrack);
 const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
 ```
-
+- 다중 상태 `useShallow`
+```tsx
+const playerState = usePlayerStore(
+	useShallow(state => ({
+		activeTrack: state.activeTrack,
+		setActiveTrack: state.setActiveTrack,
+	})),
+);
+...
+<p>{playerState.activeTrack.id}</p>
+<button onClick={() => playerState.setActiveTrack(null)} />
+```
 
 
 

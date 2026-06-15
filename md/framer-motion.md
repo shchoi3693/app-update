@@ -1,8 +1,8 @@
 ---
 date: '2026-04-30'
-title: 'Framer Motion'
-categories: ['Design']
-summary: ''
+title: 'Framer Motion 기초'
+categories: ['Visual UI']
+summary: 'Framer Motion'
 thumbnail: './img1.jpg'
 ---
 
@@ -123,16 +123,14 @@ const aniBox = {
 const scale = useMotionValue(0);
 const rotate = useTransform(scale, [0.9, 1], [0, 90])
 return(
-	<>
-		<motion.div
-			style={{ scale, rotate }}
-			variants={aniBox}
-			initial="initial"
-			animate="animate"
-			transition={{ ease: "circInOut", duration: 2 }}
-		>
-		</motion.div>
-	</>
+	<motion.div
+		style={{ scale, rotate }}
+		variants={aniBox}
+		initial="initial"
+		animate="animate"
+		transition={{ ease: "circInOut", duration: 2 }}
+	>
+	</motion.div>
 )
 ```
 ```tsx

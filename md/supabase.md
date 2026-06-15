@@ -23,21 +23,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 - `NEXT_PUBLIC_` : 클라이언트 컴포넌트에서도 접근
 
-### 파일 분리 (lib/supabase)
-- `client.ts` : `use client` 컴포넌트 사용
+### server, client 분리 (lib/supabase)
 - `server.ts` : 서버 컴포넌트
+- `client.ts` : `use client` 컴포넌트 사용
 - `middleware.ts` : 세션 갱신
 
-```ts:title=src/lib/supabase/client.ts
-import { createBrowserClient } from '@supabase/ssr'
-
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
-```
 ```ts:title=src/lib/supabase/server.ts
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -68,7 +58,16 @@ export async function createClient() {
   )
 }
 ```
+```ts:title=src/lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
 
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+```
 
 ## 스키마 (PostgreSQL)
 &nbsp; | &nbsp;
@@ -91,7 +90,7 @@ DROP FUNCTION IF EXISTS 함수 CASCADE;
 &nbsp;               | &nbsp;
 :--------------------|:-----
 `.from('테이블 명')`  | 대상 테이블 지정
-`.select('column1, column2)` | 지정된 테이블의 column 선택 <br /> `.select()` `.select(*)` 모든 column 선택
+`.select('column1, column2')` | 지정된 테이블의 column 선택 <br /> `.select()` `.select('*')` 모든 column 선택
 `.eq('column', 'value')` | 지정한 값과 일치하는 데이터만 필터링
 `.single()` | 결과 배열에서 객체 추출 <br /> 데이터 1 (0 이거나 2이상 에러)
 `.maybeSingle()` | 데이터 0 또는 1 (2이상 에러) : 존재 여부 확인
@@ -103,7 +102,7 @@ DROP FUNCTION IF EXISTS 함수 CASCADE;
 
 ### 1. middleware
 #### Supabase middleware 헬퍼
-- supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 쿠키 set을 next의 middleware에 위임
+- supabase 서버 컴포넌트는 쿠키를 읽을수만 있으므로 쿠키 set을 next의 proxy(middleware)에 위임
 - 인증 토큰 확인, 갱신
 - 쿠키 토큰 검사 후 [NextResponse](/nextresponse) 객체 받기 
 ```ts:title=src/lib/supabase/middleware.ts
@@ -194,7 +193,10 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000        # 개발
 NEXT_PUBLIC_SITE_URL=https://myapp.com            # 배포
 ```
 
-#### 1. URL 쿼리 파라미터
+#### 2-1. URL 쿼리 파라미터로 상태 반환
+- `'use server'` 사용 이유  
+  - Client의 FormData를 연결
+  - `cookies()` 사용
 ```ts:title=src/app/auth/actions.ts
 'use server';
 
@@ -209,7 +211,7 @@ export async function signUp(formData: FormData) {
     password: formData.get('password') as string,
   });
   if (error) redirect('/signup?error=' + error.message);
-  redirect('/signup?message=check_email');
+  redirect('/signup?message=check_email'); // check_email 상태
 }
 
 export async function login(formData: FormData) {
@@ -219,7 +221,7 @@ export async function login(formData: FormData) {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   });
-  if (error) redirect('/login?error=' + error.message);
+  if (error) redirect('/login?error=' + error.message); // error 상태
   redirect('/');
 }
 
@@ -233,29 +235,23 @@ export async function loginWithGoogle() {
   });
   if (data.url) redirect(data.url);
 }
-
-export async function logout() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect('/');
-}
 ```
 
-#### 2. useActionState 사용
-> React 19 이상 폼 처리 방식  
-> Server Action 에러 객체 반환, 클라이언트에서 Hook으로 받아 처리
-- React 18 이전 `useFormState`
+#### 2-2. useActionState 사용
+> React 19 이상 폼 처리 방식
+
+- Server Action 에러 객체 반환, 클라이언트에서 Hook으로 받아 처리
+- `useFormState` (React 18 이전 버전)
 
 ```tsx
-export async function login(prevState, formData){ // (이전 상태, FormData)
+export async function login(이전 상태, FormData){
   ...
 }
 ```
 ```tsx
-const [state, formAction, isPending] = useActionState(login, initialState) // (실행할 Server Action, 초기 상태값)
+const [state, formAction, isPending] = useActionState(실행할 Server Action, 초기 상태값)
 ```
 
-- 사용 예시
 ```ts:title=src/app/auth/action.ts
 'use server';
 
@@ -372,9 +368,9 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 ```
-- `login` `loginWithGoogle` 비교  
-  - 사용자 &rightarrow; Supabase 세션 발급  
-  - 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환(`exchangeCodeForSession`)
+- `login` `loginWithGoogle` 차이  
+  - `login` 사용자 &rightarrow; Supabase 세션 발급  
+  - `loginWithGoogle` 사용자 &rightarrow; Google 서버 왕복 &rightarrow; `/auth/callback` 에서 토큰 교환(`exchangeCodeForSession`)
 
 
 ### 3. Server Component에서 유저정보 가져오기
@@ -440,8 +436,8 @@ export default async function Signup({
   );
 }
 ```
-#### Sub pages
-- Server Component에서 props로 직접 전달
+### 5. Client Component에서 유저정보 가져오기
+#### 5-1. Server Component에서 props로 직접 전달
 ```tsx:title=src/app/playlist/page.tsx
 import Search from '@/components/search/Search';
 import Turntable from '@/components/turntable/Turntable';
@@ -469,7 +465,7 @@ export default async function Playlist() {
 export default function Search({ userId }: { userId: string }) {}
 ```
 
-### 5. Client에서 유저정보 가져오기 (AuthProvider)
+#### 5-2. AuthProvider
 - provider 전역 설정, 상태 관리
 - 인증 상태 전환 UI (로그인/로그아웃 이벤트 감지)
 ```tsx:title=layout.tsx
@@ -526,54 +522,3 @@ export function useUser() {
 - `onAuthStateChange((event, session)=>{})`  
   - `'INITIAL_SESSION', 'SIGNED_IN', ...` 각 이벤트
   - `session.user` state 업데이트
-
-
-
-```ts
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
-
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-
-  // 세션 체크
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-  const isPublic =
-    pathname === '/' || pathname.startsWith('/signup') || pathname.startsWith('/login');
-
-  const isAuthPage = pathname.startsWith('/signup') || pathname.startsWith('/login');
-  if ((!user && !isPublic) || (user && isAuthPage)) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
-}
-
-
-```
