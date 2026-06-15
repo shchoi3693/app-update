@@ -1,7 +1,7 @@
 ---
 date: '2026-05-06'
 title: 'TanStack Query'
-categories: ['Visual UI']
+categories: ['Modern Stack']
 summary: 'css, css trick'
 thumbnail: './gatsby-starter.jpg'
 ---

@@ -3,7 +3,7 @@
 import { usePlaylist } from '@/hooks/usePlaylist';
 import { usePlaylistTrack } from '@/hooks/useTrack';
 import { animate, motion, useMotionValue } from 'framer-motion';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AlbumCover from './AlbumCover';
 import Turntable from './turntable/Turntable';
 
@@ -20,7 +20,15 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
     isError: isTracksError,
   } = usePlaylistTrack({ user_id: userId, playlist_id: playlistId });
 
-  const listHeight = 160;
+  const containerY = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState(160);
+
+  useEffect(() => {
+    if (!containerY.current) return;
+    const { width } = containerY.current.getBoundingClientRect();
+    setListHeight(width * 0.5);
+  }, [tracks]);
+
   const y = useMotionValue(0);
   const selectedItem = useCallback(
     (index: number) => () => {
@@ -31,7 +39,7 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
         mass: 0.8,
       });
     },
-    [y],
+    [y, listHeight],
   );
   if (isPlaylistLoading) return <div>P Loading</div>;
   if (isPlaylistError || isTracksError) return <>Error</>;
@@ -42,8 +50,9 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
 
   return (
     <div className="fixed inset-0 overflow-hidden border border-gray-300">
-      <div className="absolute inset-0 mb-40">
+      <div className="absolute inset-0 mb-[20vh]">
         <motion.div
+          ref={containerY}
           drag="y"
           className="absolute inset-0 m-auto flex cursor-grab flex-col-reverse"
           style={{ y }}
@@ -53,11 +62,12 @@ export default function AlbumCoverList({ userId }: { userId: string }) {
           {tracks.map((track, index) => (
             <AlbumCover
               key={track.id}
-              totalTracks={tracks.length}
               track={track}
+              totalTracks={tracks.length}
               index={index}
               y={y}
               onTap={selectedItem(index)}
+              listHeight={listHeight}
             />
           ))}
         </motion.div>

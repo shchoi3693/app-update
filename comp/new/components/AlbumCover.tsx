@@ -17,12 +17,13 @@ interface Props {
   track: PlaylistTrack;
   totalTracks: number;
   index: number;
+  listHeight: number;
   y: MotionValue<number>;
   onTap: () => void;
 }
 
-export default function AlbumCover({ track, totalTracks, index, y, onTap }: Props) {
-  const listHeight = 160;
+export default function AlbumCover({ track, totalTracks, index, y, onTap, listHeight }: Props) {
+  console.log(listHeight);
   const targetScrollY = index * listHeight;
   const inputValues = [
     targetScrollY + listHeight,
@@ -41,7 +42,7 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
   const zIndex = useTransform(y, inputValues.slice(0, 3), [trackIndex, 100, trackIndex]);
   const transformedX = useTransform(y, inputValues, [0, 100, 150, 200, 250, 300]);
   const x = useMotionValue(transformedX.get());
-  const transformedIndex = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
+  const indexWeight = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
 
   const isActiveTrack = activeTrack?.id === track?.id;
 
@@ -51,19 +52,19 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
     }
   });
   useEffect(() => {
-    const indexValue = transformedIndex.get();
+    const currentWeight = indexWeight.get();
 
     if (!activeTrack) {
       animate(x, transformedX.get(), {
         type: 'spring',
-        stiffness: 100 + indexValue * 10,
-        damping: 24 - indexValue,
+        stiffness: 100 + currentWeight * 10,
+        damping: 24 - currentWeight,
       });
     } else if (!isActiveTrack) {
       animate(x, -400, {
         type: 'spring',
-        stiffness: indexValue * 40,
-        damping: 22 - indexValue,
+        stiffness: currentWeight * 40,
+        damping: 22 - currentWeight,
       });
     }
   }, [activeTrack, isActiveTrack]);
@@ -72,7 +73,7 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
 
   return (
     <motion.div
-      className="h-40 shrink-0"
+      className="shrink-0"
       onTap={onTap}
       style={{
         scale,
@@ -82,23 +83,27 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
     >
       <motion.div
         layoutId={`album-${track.id}`}
+        layout
         style={{
-          width: 180,
-          height: 180,
-          rotate: 0,
+          width: '50%',
+          //aspectRatio: '1 / 1',
+          height: 0,
+          paddingTop: '50%',
           background: `linear-gradient(to right, ${track.palette?.vibrant}, ${track.palette?.darkVibrant})`,
         }}
       >
-        <p className="text-sm">{track.album_name}</p>
-        <button
-          className="border border-gray-300 px-4"
-          onClick={e => {
-            e.stopPropagation();
-            setActiveTrack(track);
-          }}
-        >
-          Play
-        </button>
+        <div>
+          <p className="text-sm">{track.album_name}</p>
+          <button
+            className="border border-gray-300 px-4"
+            onClick={e => {
+              e.stopPropagation();
+              setActiveTrack(track);
+            }}
+          >
+            Play
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   );

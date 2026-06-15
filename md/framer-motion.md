@@ -105,6 +105,8 @@ const AniButton = () => {
 - `useMotionValue` MotionValue 정의 (style 속성명과 일치시키는게 관례)
 - `useTransform` 다른 MotionValue로 변환, 맵핑 	`useTransform(감지할 속성, 범위 맵핑, 변환 값)`
 - `useSpring` 최종 목표값으로 이동시 스프링 애니메이션
+- `useMotionValueEvent(motionValue, 이벤트, 콜백)`  
+  - 이벤트 : `change` `animationStart` `animationComplete` `animationCancel`
 ```tsx
 const stylePropA = useMotionValue(0)
 const stylePropB = useTransform(x, input, output)

@@ -1,17 +1,17 @@
 ---
 date: '2026-06-04'
-title: 'Turntable'
-categories: ['Design']
-summary: ''
+title: 'Turntable Music'
+categories: ['Visual UI']
+summary: 'Turntable을 만들며 Framer Motion으로'
 thumbnail: './img1.jpg'
 ---
 
-> 턴 앱을 만들며
+> 턴테이블 앱 만들며 문제점 개선
 
 ## 로그인, 회원가입(/supabase/#Next 16 + Supabase Auth)
+- Supabase의 Auth
 
-
-## 이미지 최적화 [node-vibrant](https://github.com/Vibrant-Colors/node-vibrant)
+## 이미지 색상추출 [node-vibrant](https://github.com/Vibrant-Colors/node-vibrant)
 - 이미지 블러로 백그라운드 처리를 하면 성능 부하가 심해져 패드나 모바일 디바이스에서 끊김
 - 플레이리스트 추가 시 앨범 커버 색상 값 같이 저장
 
@@ -21,6 +21,7 @@ thumbnail: './img1.jpg'
 import { Vibrant } from 'node-vibrant/browser';
 const palette = await Vibrant.from(url).getPalette();
 ```
+
 ### Node 빌드
 - DOM이 없어 별도의 디코딩 라이브러리로 색상 추출
 - 서버가 직접 fetch하기 때문에 CORS 무관
@@ -94,7 +95,105 @@ export default function Componenet({track}: Props){
 }
 ```
 
-## 축 Interacte
+## PlayList Framer Motion
+### 앨범커버 리스트
+- 드래그 Y축 고정
+- `onClick` 대신 `onTap` 사용하여 드래그와 클릭 시(탭) motion 구분
+- `useCallback` 사용하여 `y, listHeight` 변경시만 리렌더링
+
+```tsx
+const selectedItem = useCallback(
+  (index: number) => () => {
+    animate(y, listHeight * index, {
+      type: 'spring',
+      stiffness: 200,
+      damping: 20,
+      mass: 0.8,
+    });
+  },
+  [y, listHeight],
+);
+
+...
+<motion.div
+  drag="y"
+  className="absolute inset-0 m-auto flex cursor-grab flex-col-reverse"
+  style={{ y }}
+  dragConstraints={{ top: 0, bottom: maxDrag }}
+  dragElastic={0.2}
+>
+  {tracks.map((track, index) => (
+    <AlbumCover
+      key={track.id}
+      track={track}
+      totalTracks={tracks.length}
+      index={index}
+      y={y}
+      onTap={selectedItem(index)} // 중앙에 위치한 앨범 커버
+    />
+  ))}
+</motion.div>
+...
+```
+
+### 선택한 앨범커버 중심으로 각 앨범커버 Motion
+- [`useMotionValueEvent(motionValue, 이벤트, 콜백)`](/framer-motion/)
+```tsx
+export default function AlbumCover({ track, totalTracks, index, y, onTap }: Props) {
+  const listHeight = 160;
+
+  // y 상태 값
+  const targetScrollY = index * listHeight;
+  const inputValues = [
+    targetScrollY + listHeight,
+    targetScrollY, // 중앙에 위치한 앨범 커버
+    targetScrollY - listHeight * 2,
+    targetScrollY - listHeight * 3,
+    targetScrollY - listHeight * 4,
+    targetScrollY - listHeight * 5,
+  ];
+
+  // 변환 값 : useTransform(y, [y 상태 값], [y 맵핑 후 변환 값])
+  const scale = useTransform(y, inputValues, [0.7, 1, 0.8, 0.7, 0.6, 0.6]);
+  const zIndex = useTransform(y, inputValues.slice(0, 3), [trackIndex, 100, trackIndex]);
+  // 되도록 slice 사용 지양 (다른 [y 상태 값] 갯수와 동일하게 사용 : 실수 방지)
+  const transformedX = useTransform(y, inputValues, [0, 100, 150, 200, 250, 300]);
+  const x = useMotionValue(transformedX.get());
+  const indexWeight = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
+
+  // 선택한 앨범 커버
+  const isActiveTrack = activeTrack?.id === track?.id;
+
+  // transformedX 값(y) 변경 시 마다 실행
+  useMotionValueEvent(transformedX, 'change', latest => {
+    if (!activeTrack) {
+      x.set(latest);
+    }
+  });
+  useEffect(() => {
+    const currentWeight = indexWeight.get();
+
+    if (!activeTrack) {
+      animate(x, transformedX.get(), {
+        type: 'spring',
+        stiffness: 100 + currentWeight * 10,
+        damping: 24 - currentWeight,
+      });
+    } else if (!isActiveTrack) {
+      animate(x, -400, {
+        type: 'spring',
+        stiffness: currentWeight * 40,
+        damping: 22 - currentWeight,
+      });
+    }
+  }, [activeTrack, isActiveTrack]);
+
+
+}
+```
+
+
+### 턴테이블 핀
 - `Math.atan2(y, x)` : 0 ~ PI 값 &rightarrow; deg 값 `180 / Math.PI` 
 ```tsx
 const currentAngle = Math.floor(

@@ -10,7 +10,6 @@ export default function MainBnr() {
   const { data, isLoading, isError } = useMainPlaylistTracks();
   if (isLoading) return <div>loading</div>;
   if (isError) return <div>error</div>;
-  console.log(data);
 
   return (
     <div className="">
@@ -21,12 +20,13 @@ export default function MainBnr() {
         spaceBetween={20}
         modules={[Autoplay]}
         autoplay={{ delay: 1, disableOnInteraction: false }}
-        speed={8e3}
+        speed={6e3}
         freeMode={true}
+        className="[&_.swiper-wrapper]:ease-linear!"
       >
         {data?.map((track, i) => (
           <SwiperSlide key={track.album_name} style={{ width: 'auto' }}>
-            <div className="w-20 h-20 border"></div>
+            <div className="h-20 w-20 border"></div>
           </SwiperSlide>
         ))}
       </Swiper>
