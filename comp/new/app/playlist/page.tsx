@@ -1,21 +1,13 @@
 import Search from '@/components/search/Search';
-import Turntable from '@/components/turntable/Turntable';
-import AlbumCoverList from '@/components/AlbumCoverList';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import PlayerView from '@/components/PlayerView';
+import TabBar from '@/components/TabBar';
 
-export default async function Playlist() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect('/');
+export default function Playlist({ userId }: { userId: string }) {
   return (
-    <div>
-      <Search userId={user.id} />
-      <AlbumCoverList userId={user.id} />
-      {/* <Turntable /> */}
+    <div className="fixed inset-0 overflow-hidden">
+      <Search userId={userId} />
+      <PlayerView userId={userId} />
+      <TabBar />
     </div>
   );
 }

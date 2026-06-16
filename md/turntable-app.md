@@ -2,14 +2,47 @@
 date: '2026-06-04'
 title: 'Turntable Music'
 categories: ['Visual UI']
-summary: 'Turntable을 만들며 Framer Motion으로'
+summary: '사이드 프로젝트로 플레이리스트 웹앱 디자인과 Framer Motion 사용하기'
 thumbnail: './img1.jpg'
 ---
 
-> 턴테이블 앱 만들며 문제점 개선
+## 디자인
+> 애플의 [WWDC25](https://developer.apple.com/videos/play/wwdc2025/359/) 참고  
+> 구조 &rightarrow; 내비게이션 &rightarrow; 콘텐츠 &rightarrow; 비주얼 디자인
 
-## 로그인, 회원가입(/supabase/#Next 16 + Supabase Auth)
-- Supabase의 Auth
+### 구조
+- 명확성  
+ - 어디에 있는지 : 상단 타이틀
+ - 무엇을 할 수있는지 : 검색 버튼, 로그아웃 버튼
+ - 어디로 갈 수 있는지 : 하단 탭바
+- 앱이 하는 모든 기능 정리  
+  - 로그인, 회원가입
+  - 메인 (첫 진입 화면)
+  - 플레이리스트  
+    - Track 삭제
+  - 플레이
+  - 검색  
+    - Track 추가
+
+### 내비게이션
+- 다른 섹션 탐색  
+  - 플레이리스트, 검색
+- 2개 ~ 최대 4개 동일한 너비
+- input 키보드로 일시적으로 가려질 수 있는 영역
+
+### 콘텐츠
+- 가장 중요하게 생각하는 것, 기대하는 것 안내
+- 기본 리스트 정렬 방법  
+  - 시간 : 최근 파일, 계절성 &rightarrow; 여름에 듣기 좋은 레코드
+  - 진행 상태 : 임시 저장, 이어서 보기
+  - 패턴 : 연관 상품 &rightarrow; 장르별 레코드
+
+### 비주얼 디자인
+- 시각적 위계
+- 텍스트 가독성 : 앨범커버에 이미지 그라데이션 블러 추가
+
+## 로그인, 회원가입 
+- Next [Supabase](/supabase/#Next 16 + Supabase Auth)의 Auth
 
 ## 이미지 색상추출 [node-vibrant](https://github.com/Vibrant-Colors/node-vibrant)
 - 이미지 블러로 백그라운드 처리를 하면 성능 부하가 심해져 패드나 모바일 디바이스에서 끊김
@@ -136,7 +169,7 @@ const selectedItem = useCallback(
 ...
 ```
 
-### 선택한 앨범커버 중심으로 각 앨범커버 Motion
+### 앨범커버 Motion
 - [`useMotionValueEvent(motionValue, 이벤트, 콜백)`](/framer-motion/)
 ```tsx
 export default function AlbumCover({ track, totalTracks, index, y, onTap }: Props) {
@@ -188,23 +221,41 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap }: Prop
     }
   }, [activeTrack, isActiveTrack]);
 
-
+...
+  <motion.div
+    className="shrink-0"
+    onTap={onTap}
+    style={{
+      scale,
+      zIndex,
+      x,
+    }}
+  >
+    <motion.div
+      layoutId={`album-${track.id}`}
+      layout
+      style={{
+        width: '50%',
+        height: 0,
+        paddingTop: '50%',
+        background: `linear-gradient(to right, ${track.palette?.vibrant}, ${track.palette?.darkVibrant})`,
+      }}
+    >
+...
 }
 ```
 
-
 ### 턴테이블 핀
-- `Math.atan2(y, x)` : 0 ~ PI 값 &rightarrow; deg 값 `180 / Math.PI` 
+- Framer Motion [onPan](/framer-motion/props) 사용
+- `PanInfo` 사용하여 현재 포인트 좌표(current) 값 가져오기
+- 각도 계산  
+  - `Math.atan2(y, x)` 0 ~ PI 값 &rightarrow; `180 / Math.PI` deg 값으로 변환
 ```tsx
-const currentAngle = Math.floor(
-  // atan2(현재 포인트 좌표 - 기준 축)
+Math.floor(
+  // atan2(현재 포인트 좌표(current) - 기준 축(pivot))
   (Math.atan2(currentY - pivotY, currentX - pivotX) * 180) / Math.PI,
 );
 ```
-
-- Framer Motion [onPan] 사용
-- [useSpring]
-- `PanInfo` 사용하여 현재 포인트 좌표 값 가져오기
 ```tsx
 const pinWrapper = useRef<HTMLDivElement>(null);
 const rotateRaw = useMotionValue(0);
@@ -234,8 +285,6 @@ const handlePin = (event: PointerEvent, info: PanInfo) => {
   rotateRaw.set(deg);
 };
 ```
-
-
 
 ```sql
 ALTER TABLE playlist_tracks
@@ -288,3 +337,8 @@ mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
   });
 },
 ```
+
+
+* * *
+- 디자인  
+  - https://brunch.co.kr/@hnjnkm/58

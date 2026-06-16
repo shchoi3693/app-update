@@ -1,5 +1,3 @@
-'use client';
-
 import { motion, PanInfo, useMotionValue, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 
@@ -41,7 +39,7 @@ export default function TurntablePin() {
 
   return (
     <motion.div
-      className="absolute top-[5%] right-[10%] z-201 h-[80%] w-[5%] origin-top cursor-grab touch-none rounded-full bg-amber-200 select-none"
+      className="absolute top-[5%] right-[10%] z-10 h-[80%] w-[5%] origin-top cursor-grab touch-none rounded-full bg-amber-200 select-none"
       ref={pinWrapper}
       onPan={handlePin}
       onPanStart={handlePinStart}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import './globals.css';
 import TanstackProvider from '@/providers/TanstackProvider';
-import AuthProvider from '@/providers/AuthProvider';
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'Next',
@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={`h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col">
         <TanstackProvider>{children}</TanstackProvider>
       </body>
     </html>

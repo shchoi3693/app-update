@@ -2,7 +2,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePlayerStore } from '@/store/usePlayerStore';
-import TurntableBody from './TurntableBody';
+import TurntableCover from './TurntableCover';
+import TurntablePin from './TurntablePin';
+import TurntableLp from './TurntableLp';
 
 export default function Turntable() {
   const activeTrack = usePlayerStore(state => state.activeTrack);
@@ -11,40 +13,36 @@ export default function Turntable() {
   return (
     <AnimatePresence mode="wait">
       {activeTrack && (
-        <motion.div
-          className="fixed inset-0"
-          style={{
-            zIndex: 101,
-          }}
-        >
+        <motion.div className="fixed inset-0 z-200">
           <button className="h-10 w-10 cursor-pointer border" onClick={() => setActiveTrack(null)}>
             {'<'}
           </button>
-          <p>{activeTrack.title}</p>
+          <h2 className="text-sm">{activeTrack.title}</h2>
+
+          <TurntableCover />
 
           <motion.div
-            layoutId={`album-${activeTrack.id}`}
-            layout
-            className="absolute inset-0 z-201 my-auto"
-            style={{
-              width: '50%',
-              height: 0,
-              paddingTop: '50%',
-              left: '6%',
-              background: `linear-gradient(to right, ${activeTrack.palette?.vibrant}, ${activeTrack.palette?.darkVibrant})`,
+            className="absolute inset-0 left-auto my-auto h-0 w-1/2 overflow-hidden pt-[50%]"
+            initial={{ right: '-100%' }}
+            animate={{
+              right: 0,
+              transition: {
+                type: 'spring',
+                stiffness: 100,
+                damping: 25,
+                delay: 0.6,
+              },
             }}
-            initial={{ rotate: 0 }}
-            animate={{ rotate: -5 }}
-            exit={{ rotate: 0 }}
-            transition={{
-              delay: 0.3,
-              duration: 0.6,
-              ease: 'easeInOut',
-              rotate: { delay: 0.9, duration: 0.5, ease: 'easeInOut' },
+            exit={{
+              right: '-100%',
+              transition: {
+                delay: 0.3,
+              },
             }}
-          />
-
-          <TurntableBody />
+          >
+            <TurntableLp />
+            <TurntablePin />
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
