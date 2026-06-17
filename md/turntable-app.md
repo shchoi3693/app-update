@@ -15,7 +15,7 @@ thumbnail: './img1.jpg'
  - 어디에 있는지 : 상단 타이틀
  - 무엇을 할 수있는지 : 검색 버튼, 로그아웃 버튼
  - 어디로 갈 수 있는지 : 하단 탭바
-- 앱이 하는 모든 기능 정리  
+- 정보 구조 설계 : 앱이 하는 모든 기능 정리 &rightarrow; 정리  
   - 로그인, 회원가입
   - 메인 (첫 진입 화면)
   - 플레이리스트  
@@ -32,7 +32,7 @@ thumbnail: './img1.jpg'
 
 ### 콘텐츠
 - 가장 중요하게 생각하는 것, 기대하는 것 안내
-- 기본 리스트 정렬 방법  
+- 정돈된 리스트 정렬 방법  
   - 시간 : 최근 파일, 계절성 &rightarrow; 여름에 듣기 좋은 레코드
   - 진행 상태 : 임시 저장, 이어서 보기
   - 패턴 : 연관 상품 &rightarrow; 장르별 레코드
@@ -88,22 +88,22 @@ export async function GET(request: Request) {
 return useMutation({
 	mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
 
-		// Browser 빌드 시
-		const palette = await Vibrant.from(track.artworkUrl100).getPalette();
-		return trackService.addTrackToPlaylist({
-			userId,
-			newTrack:{
-				...
-				palette: {
-					vibrant: palette.Vibrant?.hex,
-					muted: palette.Muted?.hex,
-					darkVibrant: palette.DarkVibrant?.hex,
-					lightVibrant: palette.LightVibrant?.hex,
-					darkMuted: palette.DarkMuted?.hex,
-					lightMuted: palette.LightMuted?.hex,
-				},
-			}
-		})
+    // Browser 빌드 시
+    const palette = await Vibrant.from(track.artworkUrl100).getPalette();
+    return trackService.addTrackToPlaylist({
+      userId,
+      newTrack:{
+        ...
+        palette: {
+          vibrant: palette.Vibrant?.hex,
+          muted: palette.Muted?.hex,
+          darkVibrant: palette.DarkVibrant?.hex,
+          lightVibrant: palette.LightVibrant?.hex,
+          darkMuted: palette.DarkMuted?.hex,
+          lightMuted: palette.LightMuted?.hex,
+        },
+      }
+    })
 
     // Node 빌드 시
     const paletteRes = await fetch(`/api/palette?url=${encodeURIComponent(track.artworkUrl100)}`);
@@ -135,6 +135,11 @@ export default function Componenet({track}: Props){
 - `useCallback` 사용하여 `y, listHeight` 변경시만 리렌더링
 
 ```tsx
+const [maxDrag, setMaxDrag] = useState(0);
+const { ref, width } = useMeasure();
+const listHeight = Math.round(width * 0.5);
+
+const y = useMotionValue(0);
 const selectedItem = useCallback(
   (index: number) => () => {
     animate(y, listHeight * index, {
@@ -147,10 +152,19 @@ const selectedItem = useCallback(
   [y, listHeight],
 );
 
+useEffect(() => {
+  if (!tracks || tracks.length === 0) return;
+
+  setMaxDrag((tracks.length - 1) * listHeight);
+  if (maxDrag < y.get()) {
+    y.set(maxDrag);
+  }
+}, [tracks, listHeight]);
+
 ...
 <motion.div
   drag="y"
-  className="absolute inset-0 m-auto flex cursor-grab flex-col-reverse"
+  className="absolute inset-0 m-auto flex max-w-md cursor-grab flex-col-reverse"
   style={{ y }}
   dragConstraints={{ top: 0, bottom: maxDrag }}
   dragElastic={0.2}
@@ -163,6 +177,7 @@ const selectedItem = useCallback(
       index={index}
       y={y}
       onTap={selectedItem(index)} // 중앙에 위치한 앨범 커버
+      listHeight={listHeight}
     />
   ))}
 </motion.div>
@@ -172,25 +187,30 @@ const selectedItem = useCallback(
 ### 앨범커버 Motion
 - [`useMotionValueEvent(motionValue, 이벤트, 콜백)`](/framer-motion/)
 ```tsx
-export default function AlbumCover({ track, totalTracks, index, y, onTap }: Props) {
-  const listHeight = 160;
-
-  // y 상태 값
+export default function AlbumCover({ track, totalTracks, index, y, onTap, listHeight }: Props) {
   const targetScrollY = index * listHeight;
   const inputValues = [
+    targetScrollY + listHeight * 2,
     targetScrollY + listHeight,
     targetScrollY, // 중앙에 위치한 앨범 커버
     targetScrollY - listHeight * 2,
     targetScrollY - listHeight * 3,
     targetScrollY - listHeight * 4,
-    targetScrollY - listHeight * 5,
   ];
 
   // 변환 값 : useTransform(y, [y 상태 값], [y 맵핑 후 변환 값])
-  const scale = useTransform(y, inputValues, [0.7, 1, 0.8, 0.7, 0.6, 0.6]);
-  const zIndex = useTransform(y, inputValues.slice(0, 3), [trackIndex, 100, trackIndex]);
-  // 되도록 slice 사용 지양 (다른 [y 상태 값] 갯수와 동일하게 사용 : 실수 방지)
-  const transformedX = useTransform(y, inputValues, [0, 100, 150, 200, 250, 300]);
+  const scale = useTransform(y, inputValues, [0.7, 0.8, 1, 0.8, 0.7, 0.6]);
+  // const zIndex = useTransform(y, inputValues.slice(0, 4), [trackIndex, trackIndex, 100, trackIndex]);
+  // 되도록 slice 사용 지양 (맵핑 갯수 동일하게 사용 : 실수 방지)
+  const zIndex = useTransform(y, inputValues, [
+    trackIndex,
+    trackIndex,
+    100,
+    trackIndex,
+    trackIndex,
+    trackIndex,
+  ]);
+  const transformedX = useTransform(y, inputValues, [-40, -20, 50, 150, 200, 250]);
   const x = useMotionValue(transformedX.get());
   const indexWeight = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
 
