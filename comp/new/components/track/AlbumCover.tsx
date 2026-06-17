@@ -23,24 +23,30 @@ interface Props {
 }
 
 export default function AlbumCover({ track, totalTracks, index, y, onTap, listHeight }: Props) {
-  //console.log(listHeight);
   const targetScrollY = index * listHeight;
   const inputValues = [
+    targetScrollY + listHeight * 2,
     targetScrollY + listHeight,
     targetScrollY, // Selected
     targetScrollY - listHeight * 2,
     targetScrollY - listHeight * 3,
     targetScrollY - listHeight * 4,
-    targetScrollY - listHeight * 5,
   ];
 
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
 
-  const scale = useTransform(y, inputValues, [0.7, 1, 0.8, 0.7, 0.6, 0.6]);
+  const scale = useTransform(y, inputValues, [0.7, 0.8, 1, 0.8, 0.7, 0.6]);
   const trackIndex = totalTracks - index;
-  const zIndex = useTransform(y, inputValues.slice(0, 3), [trackIndex, 100, trackIndex]);
-  const transformedX = useTransform(y, inputValues, [0, 100, 150, 200, 250, 300]);
+  const zIndex = useTransform(y, inputValues, [
+    trackIndex,
+    trackIndex,
+    100,
+    trackIndex,
+    trackIndex,
+    trackIndex,
+  ]);
+  const transformedX = useTransform(y, inputValues, [-40, -20, 50, 150, 200, 250]);
   const x = useMotionValue(transformedX.get());
   const indexWeight = useTransform(y, inputValues, [1, 2, 3, 4, 5, 6]);
 

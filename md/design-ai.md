@@ -2,7 +2,7 @@
 date: '2026-04-30'
 title: 'Design.md'
 categories: ['Design']
-summary: ''
+summary: 'Google Stitch Design.md'
 thumbnail: './img1.jpg'
 ---
 

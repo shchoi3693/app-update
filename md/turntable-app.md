@@ -286,6 +286,65 @@ const handlePin = (event: PointerEvent, info: PanInfo) => {
 };
 ```
 
+## 앨범커버 `listHeight` 반응형
+> [ResizeObserver](/web-api/)로 리스트의 width 사이즈 비례하여 조정
+- 새로운 Hook 생성 (useMeasure.ts)
+- DOM 요소(ref) 생성 후 width 사이즈 가져오는 함수 실행
+- `ref` 연결 방법  
+  - 객체 연결 : `useRef` 렌더링 끝난 후 { current }에 연결 (조건부 없음)
+  - 콜백 함수 연결 : 렌더링 될 때마다 실행 방지 위해 `useCallback` 사용
+
+```ts:title=src/hooks/useMeasure.ts
+import { useCallback, useRef, useState } from 'react';
+
+interface Dimensions {
+  width: number;
+  height: number;
+  // top: number;
+  // left: number;
+  // x: number;
+  // y: number;
+}
+
+export function useMeasure<T extends HTMLDivElement>() {
+  const [dimensions, setDimensions] = useState<Dimensions>({
+    width: 0,
+    height: 0,
+    // top: 0,
+    // left: 0,
+    // x: 0,
+    // y: 0,
+  });
+
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const ref = useCallback((node: T | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    if (node !== null) {
+      const resizeObserver = new ResizeObserver(entries => {
+        entries.forEach(entry => {
+          setDimensions({ width: entry.contentRect.width, height: entry.contentRect.height });
+        });
+      });
+      resizeObserver.observe(node);
+      observerRef.current = resizeObserver;
+    }
+    return () => {
+      if (observerRef.current) {
+        console.log('observe 해제');
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  return { ref, ...dimensions };
+}
+```
+
+* * * 
+
 ```sql
 ALTER TABLE playlist_tracks
 ADD COLUMN IF NOT EXISTS palette JSONB;

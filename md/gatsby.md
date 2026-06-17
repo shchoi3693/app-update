@@ -6,6 +6,68 @@ summary: ''
 thumbnail: './img1.jpg'
 ---
 
+## web api
+## ResizeObserver
+> 대상 요소 크기 변화 비동기적 관찰, 생성자(객체)
+
+Methods               | &nbsp;
+:---------------------------------|:-----------
+`ResizeObserver.observe(targetElement)`  | 관찰 대상 목록에 요소 추가
+`ResizeObserver.unobserve(target)`       | 관찰 종료
+`ResizeObserver.disconnect()`            | 모든 관찰 해제
+
+```js
+const resizeObserver = new ResizeObserver(entries => {
+	entries.forEach(entry => {
+		...entry.contentRect.width
+	});
+});
+resizeObserver.observe(Observe Element);
+```
+
+## Intersection Observer API
+> 상위 요소 또는 최상의 문서의 뷰포트와 대상 요소 사이의 변화 비동기적 관찰, 생성자(객체)
+- 이미지 Lazy loading
+- 무한 스크롤
+
+Methods               | &nbsp;
+:------------------------------------|:-----------
+`IntersectionObserver.observe(targetElement)`  | 주시 대상 목록에 요소 추가
+`IntersectionObserver.unobserve(target)`       | 주시 중단
+`IntersectionObserver.disconnect()`            | 모든 주시 대상 해제
+
+Options               | &nbsp;
+:---------------------------------|:-----------
+`IntersectionObserver.root`       | 바운딩 기준 요소(타겟의 상위 요소). null 이면 브라우저 뷰포트
+`IntersectionObserver.rootMargin` | root 요소에 적용될 사이즈 조정 (px, %) <br /> ex) fixed 요소 있을 경우 조정
+`IntersectionObserver.thresholds` | oberver의 콜백이 실행되어야하는 가시성 백분율 (0 ~ 1) 0.5 &rightarrow; 50% 보일 때 콜백
+
+```js
+const observers = []; // new IntersectionObserver 들 저장 관리, 해제(disconnect) 안할 시 메모리 누수
+const observeContent = ()=>{
+	const options = {
+		root: null,
+		rootMargin: `0px 0px 0px 0px`,
+		threshold: 0.5
+	}
+	const observer = new IntersectionObserver(entries =>{
+		entries.forEach(entry =>{
+			if(entry.isIntersecting){
+				...
+			}
+		})
+	}, options)
+	observer.observe(Observe Element)
+	observers.push(observer)
+}
+const disconnectObserveContent = ()=>{
+	observers.forEach(observer => observer.disconnect());
+	observers.length = 0; // 기존 배열 (const observers) 유지하면서 내용만 삭제하고 싶을 때
+}
+```
+
+
+
 
 ## Circle Percent
 
