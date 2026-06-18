@@ -16,6 +16,120 @@ thumbnail: './gatsby-starter.jpg'
 대상     | 모든 사용자(공용) | 해당 사용자
 목적     | 외부 API 호출 횟수 감소 | 불필요한 재요청 감소
 
+## Vite 구성
+```tsx
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+const queryClient = new QueryClient()
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools />
+      <Example />
+    </QueryClientProvider>
+  )
+}
+```
+
+## Next.js 구성 (Server 렌더링)
+- `QueryClientProvider` 사용시 전체(layout)가 Client Component로 변환해야하는 문제  
+  - JS 번들크기 증가, 초기 로딩 속도 저하
+
+### `queryClient` 생성 후 `QueryClientProvider`로 감싸기
+```tsx:title=src/providers/TanstackProvider.tsx
+'use client';
+
+import { ReactNode } from 'react';
+import { environmentManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+export default function TanstackProvider({ children }: { children: ReactNode }) {
+  function makeQueryClient() {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+					// refetch 방지 위해 0보다 크게
+          staleTime: 1000 * 60 * 5,
+        },
+      },
+    });
+  }
+
+  let browserQueryClient: QueryClient | undefined = undefined;
+  function getQueryClient() {
+    if (environmentManager.isServer()) {
+      return makeQueryClient();
+    } else {
+			// new QueryClient 없을 때 생성
+      if (!browserQueryClient) browserQueryClient = makeQueryClient();
+      return browserQueryClient;
+    }
+  }
+  const queryClient = getQueryClient();
+
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+```
+```tsx:title=/app/layout.tsx
+import TanstackProvider from '@/providers/TanstackProvider';
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ko" className={`h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
+        <TanstackProvider>{children}</TanstackProvider>
+      </body>
+    </html>
+  );
+}
+```
+### Server Component
+```tsx:title=/page.tsx
+export default async function Example() {
+  const queryClient = new QueryClient()
+
+  await queryClient.prefetchQuery({
+    queryKey: ['posts'],
+    queryFn: getPosts,
+  })
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Posts />
+    </HydrationBoundary>
+  )
+}
+```
+
+### Client Component
+- Server Component 에서 `prefetchQuery` 했다면 `useQuery` 같은 키(`queryKey`) 어디든(server, client) 사용 가능
+```tsx:title=/page.tsx
+'use client'
+export default function Posts() {
+  const { data } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => getPosts(),
+  })
+
+  const { data: commentsData } = useQuery({
+    queryKey: ['posts-comments'], // 나중에 보여도 되는 데이터
+    queryFn: getComments,
+  })
+	...
+}
+```
+- Server prefetch : 중요하거나 화면에 먼저 보여야하는 데이터 (게시글 본문)
+- Client : 유저 상호작용 (댓글 목록, 추천 상품)
+
 ## useQuery
 > 기본 쿼리 훅
 - 컴포넌트에서 데이터 가져올 때 사용
