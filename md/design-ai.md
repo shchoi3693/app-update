@@ -1,5 +1,5 @@
 ---
-date: '2026-04-30'
+date: '2026-06-02'
 title: 'Design.md'
 categories: ['Design']
 summary: 'Google Stitch Design.md'
@@ -19,7 +19,7 @@ thumbnail: './img1.jpg'
 ## 표준 섹션
 
 ### 1. YAML front matter
-> 맨 위 YAML 블록
+> 맨 위 YAML 블록, 머신러닝이 읽을 수 있는 디자인 토큰이 포함되어 일관성을 강제하기 위한 정밀한 값
 - 디자인 토큰 코드로 자동 변환
 - 버전, 브랜드 명, description (감성적이고 철학적 기반 : 태도, 분위기, 영감) 
 - 형용사적 `단호한 침착함` `활기찬 명확한 정보 전달` &rightarrow; 획일적인 디자인을 피하게 해줌
@@ -210,6 +210,14 @@ When generating UI:
 절대 금지: Inter 폰트, 보라색(SaaS 특유의 컬러), 진부한 그라디언트, 흔해 빠진 3단 카드 형태의 기능 소개 그리드.
 ```
 
+## 스타일 가이드 지침 규칙 정의
+```markdown
+## Design System
+
+모든 UI 작업은 [DESIGN.md](DESIGN.md)의 디자인 토큰을 따른다.
+색상·간격·반경은 `styles.css`의 `:root`에 정의되어 있으며 DESIGN.md와 일치한다.
+값을 하드코딩하지 말고 변수를 사용/수정할 것.
+```
 
 ## Design AI 생성 현재 활용 방법
 - 여러개의 사이트 생성 후(시안) 하나를 선택

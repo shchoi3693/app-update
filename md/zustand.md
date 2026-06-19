@@ -1,5 +1,5 @@
 ---
-date: '2026-05-06'
+date: '2026-06-13'
 title: 'Zustand'
 categories: ['Modern Stack']
 summary: 'css, css trick'

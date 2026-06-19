@@ -1,5 +1,5 @@
 ---
-date: '2026-06-04'
+date: '2026-06-20'
 title: 'Turntable Music'
 categories: ['Visual UI']
 summary: '사이드 프로젝트로 플레이리스트 웹앱 디자인과 Framer Motion 사용하기'
@@ -416,7 +416,6 @@ mutationFn: async ({ userId, track }: { userId: string; track: Itunes }) => {
   });
 },
 ```
-
 
 * * *
 - 디자인  

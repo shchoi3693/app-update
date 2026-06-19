@@ -1,5 +1,5 @@
 ---
-date: '2026-05-06'
+date: '2026-06-13'
 title: 'TanStack Query'
 categories: ['Modern Stack']
 summary: 'css, css trick'
@@ -38,8 +38,8 @@ export default function App() {
 ```
 
 ## Next.js 구성 (Server 렌더링)
-- `QueryClientProvider` 사용시 전체(layout)가 Client Component로 변환해야하는 문제  
-  - JS 번들크기 증가, 초기 로딩 속도 저하
+- `QueryClientProvider` 사용시 전체(layout)를 Client Component로 변환해야하는 문제  
+  - Client Component만 사용 시 JS 번들크기 증가, 초기 로딩 속도 저하
 
 ### `queryClient` 생성 후 `QueryClientProvider`로 감싸기
 ```tsx:title=src/providers/TanstackProvider.tsx
@@ -96,7 +96,6 @@ export default function RootLayout({
 ```tsx:title=/page.tsx
 export default async function Example() {
   const queryClient = new QueryClient()
-
   await queryClient.prefetchQuery({
     queryKey: ['posts'],
     queryFn: getPosts,
@@ -111,12 +110,12 @@ export default async function Example() {
 ```
 
 ### Client Component
-- Server Component 에서 `prefetchQuery` 했다면 `useQuery` 같은 키(`queryKey`) 어디든(server, client) 사용 가능
+- Server Component 에서 `prefetchQuery` 했다면 `useQuery`(`queryKey`) 어디든(server, client) 사용 가능
 ```tsx:title=/page.tsx
 'use client'
 export default function Posts() {
   const { data } = useQuery({
-    queryKey: ['posts'],
+    queryKey: ['posts'], // prefetch 데이터
     queryFn: () => getPosts(),
   })
 
@@ -127,8 +126,8 @@ export default function Posts() {
 	...
 }
 ```
-- Server prefetch : 중요하거나 화면에 먼저 보여야하는 데이터 (게시글 본문)
-- Client : 유저 상호작용 (댓글 목록, 추천 상품)
+- Server prefetch : 중요하거나 화면에 먼저 보여야하는 데이터 (SEO 향상, 게시글 본문)
+- Client : 유저 상호작용 데이터 (댓글 목록, 추천 상품)
 
 ## useQuery
 > 기본 쿼리 훅
@@ -202,4 +201,3 @@ const handler = (data) =>{
 	addData(data)
 }
 ```
-

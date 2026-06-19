@@ -6,7 +6,6 @@ summary: 'css, css trick'
 thumbnail: './gatsby-starter.jpg'
 ---
 
-
 ## Glass 효과
 ```html
 <div class="glass">

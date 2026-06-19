@@ -1,5 +1,5 @@
 ---
-date: '2026-06-05'
+date: '2026-05-11'
 title: 'Next.js 16'
 categories: ['Modern Stack']
 summary: 'Next.js 16 버전, NextResponse'
@@ -12,7 +12,6 @@ thumbnail: './img1.jpg'
 - `middleware.ts` `proxy.ts`로 변경
 - `searchParams` `cookies()` `headers()` 비동기로 접근
 - Turbopack 기본 값. Webpack 로더 지원 [사용예시](/svgr/#next-16-세팅)
-
 
 ## Server | Client
 ### Server Component
@@ -62,7 +61,7 @@ thumbnail: './img1.jpg'
 import { Roboto } from 'next/font/google';
 
 export const roboto = Roboto({
-  subsets: ['latin'], // 사용할 폰트 (영문 글자만 포함된 경량 폰트 로드) 한글 전용 폰트는 보통 subset 구분 없이 전체 로드
+  subsets: ['latin'], // 사용할 폰트 (영문 글자만 포함된 경량 폰트 로드) 한글 전용 폰트는 보통 subset 구분 없이 전체 로드함
   weight: ['400', '700'],
   display: 'swap',
   variable: '--font-roboto',
@@ -90,6 +89,7 @@ body {
 ```
 
 ### 웹폰트
+- tailwind.css 설정
 ```bash
 pnpm add pretendard
 ```

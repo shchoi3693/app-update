@@ -1,5 +1,5 @@
 ---
-date: '2026-04-30'
+date: '2026-06-10'
 title: 'Framer Motion 기초'
 categories: ['Visual UI']
 summary: 'Framer Motion'
@@ -12,7 +12,7 @@ thumbnail: './img1.jpg'
 - 모든 HTML 및 SVG 요소
 - `<motion.div>` `<motion.span>` `<motion.circle>`
 
-## 애니메이션 구조
+### 애니메이션 구조
 - 애니메이션 초기 상태 (마운트 시점)
 - 애니메이션 끝난 상태
 - 애니메이션 진행 모습
@@ -103,10 +103,9 @@ const AniButton = () => {
 - MotionValue 생성 후 inline 스타일에 정의
 - `.get()` `.set()` 매서드로 값 관리
 - `useMotionValue` MotionValue 정의 (style 속성명과 일치시키는게 관례)
-- `useTransform` 다른 MotionValue로 변환, 맵핑 	`useTransform(감지할 속성, 범위 맵핑, 변환 값)`
-- `useSpring` 최종 목표값으로 이동시 스프링 애니메이션
-- `useMotionValueEvent(motionValue, 이벤트, 콜백)`  
-  - 이벤트 : `change` `animationStart` `animationComplete` `animationCancel`
+
+### `useTransform` 다른 MotionValue로 변환, 맵핑 
+- `useTransform(감지할 속성, 범위 맵핑, 변환 값)`
 ```tsx
 const stylePropA = useMotionValue(0)
 const stylePropB = useTransform(x, input, output)
@@ -135,6 +134,10 @@ return(
 	</motion.div>
 )
 ```
+- `useMotionValueEvent(motionValue, 이벤트, 콜백)`  
+  - 이벤트 : `change` `animationStart` `animationComplete` `animationCancel`
+
+### `useSpring` 최종 목표값으로 이동시 스프링 애니메이션
 ```tsx
 const scale = useSpring(scale, { stiffness: 200, damping: 10 })
 ```
@@ -187,8 +190,7 @@ const MyComponent = () => {
 - `dragElastic` 드래그 영역 밖 움직임 정도 (default: 0.5)
 
 
-## Motion.js
-> 바닐라 JavaScript 환경에서 사용하기
+## 바닐라 JavaScript 환경
 
 ```js
 <script src="https://cdn.jsdelivr.net/npm/motion@latest/dist/motion.js"></script>
