@@ -26,12 +26,12 @@ export default function SearchResult({ query, tracks, onAddTrack, isLoading }: P
                   className="flex border border-gray-200"
                   onClick={() => onAddTrack(track)}
                 >
-                  <div className="relative shrink-0 w-10 h-10 border border-gray-200">
+                  <div className="relative h-10 w-10 shrink-0 border border-gray-200">
                     <Image fill src={track.artworkUrl100} alt={track.trackName} unoptimized />
                   </div>
                   <div className="flex">
-                    <p className="text-sm p-3">{track.trackName}</p>
-                    <p className="text-sm p-3">{track.artistName}</p>
+                    <p className="p-3 text-sm">{track.trackName}</p>
+                    <p className="p-3 text-sm">{track.artistName}</p>
                   </div>
                 </li>
               );

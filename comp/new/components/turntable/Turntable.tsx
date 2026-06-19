@@ -22,7 +22,7 @@ export default function Turntable() {
           <TurntableCover />
 
           <motion.div
-            className="absolute inset-0 left-auto my-auto h-0 w-1/2 overflow-hidden pt-[50%]"
+            className="absolute inset-0 left-auto my-auto aspect-square w-1/2 overflow-hidden"
             initial={{ right: '-100%' }}
             animate={{
               right: 0,

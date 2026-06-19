@@ -90,7 +90,7 @@ export default function AlbumCover({ track, totalTracks, index, y, onTap, listHe
       <motion.div
         layoutId={`album-${track.id}`}
         layout
-        className="h-0 w-1/2 pt-[50%]"
+        className="aspect-square w-1/2"
         style={{
           background: `linear-gradient(to right, ${track.palette?.vibrant}, ${track.palette?.darkVibrant})`,
         }}

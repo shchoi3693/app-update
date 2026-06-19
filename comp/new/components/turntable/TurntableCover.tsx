@@ -8,7 +8,7 @@ export default function TurntableCover() {
     <motion.div
       layoutId={`album-${activeTrack?.id}`}
       layout
-      className="absolute inset-0 z-10 my-auto h-0 w-1/2 pt-[50%]"
+      className="absolute inset-0 z-10 my-auto aspect-square w-1/2"
       style={{
         left: '6%',
         background: `linear-gradient(to right, ${activeTrack?.palette?.vibrant}, ${activeTrack?.palette?.darkVibrant})`,

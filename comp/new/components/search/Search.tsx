@@ -5,17 +5,14 @@ import SearchInput from './SearchInput';
 import SearchResult from './SearchResult';
 import { useSearchTracks } from '@/hooks/useSearch';
 import { useAddTrack } from '@/hooks/useTrack';
-import { useRouter } from 'next/navigation';
 import { Itunes } from '@/types/itunes';
-import { useUser } from '@/providers/AuthProvider';
 import { usePlayerStore } from '@/store/usePlayerStore';
 
 export default function Search({ userId }: { userId: string }) {
   const [query, setQuery] = useState('');
-  const { data, isLoading: isSearchLoading } = useSearchTracks(query);
+  const { data, isLoading } = useSearchTracks(query);
   const tracks = data?.results || [];
   const { mutate: addTrack, isPending: isAddTrackPending } = useAddTrack();
-  const router = useRouter();
   const [videoId, setVideoId] = useState<string>('');
 
   const activeTrack = usePlayerStore(state => state.activeTrack);
@@ -23,11 +20,6 @@ export default function Search({ userId }: { userId: string }) {
   //if (isLoading) return <>user Loading</>;
   const handlerReset = () => setQuery('');
   const handlerAddTrack = (track: Itunes) => {
-    if (!userId) {
-      router.push('/login');
-      return;
-    }
-
     addTrack(
       { userId, track },
       {
@@ -42,7 +34,7 @@ export default function Search({ userId }: { userId: string }) {
 
   if (!activeTrack)
     return (
-      <div className="">
+      <div className="absolute inset-0">
         <SearchInput
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -51,7 +43,7 @@ export default function Search({ userId }: { userId: string }) {
         <SearchResult
           query={query}
           tracks={tracks}
-          isLoading={isSearchLoading}
+          isLoading={isLoading}
           onAddTrack={handlerAddTrack}
         />
       </div>

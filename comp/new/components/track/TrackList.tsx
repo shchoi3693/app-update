@@ -19,7 +19,7 @@ export default function TrackList({ userId }: { userId: string }) {
     data: tracks,
     isLoading: isTracksLoading,
     isError: isTracksError,
-  } = usePlaylistTrack({ user_id: userId, playlist_id: playlistId });
+  } = usePlaylistTrack({ userId: userId, playlistId: playlistId });
   const router = useRouter();
 
   const [maxDrag, setMaxDrag] = useState(0);
@@ -48,7 +48,7 @@ export default function TrackList({ userId }: { userId: string }) {
     }
   }, [tracks, listHeight]);
 
-  if (isPlaylistLoading || isTracksLoading) return <div>Loading</div>;
+  if (isPlaylistLoading || isTracksLoading) return <div>track Loading</div>;
 
   if (isPlaylistError || isTracksError)
     return (

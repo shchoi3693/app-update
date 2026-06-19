@@ -3,24 +3,34 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Itunes } from '@/types/itunes';
 import { Vibrant } from 'node-vibrant/browser';
 
+import { playlistKeys } from './usePlaylist';
+
+export const trackKeys = {
+  all: ['tracks'] as const,
+  mainPlaylist: () => [...trackKeys.all, 'main'] as const,
+  byPlaylist: (userId: string | null, playlistId: string | null) =>
+    [...trackKeys.all, userId, playlistId] as const,
+};
+
 export const useMainPlaylistTracks = () => {
   return useQuery({
-    queryKey: ['main_playlist', 'tracks'],
+    queryKey: trackKeys.mainPlaylist(), //['main_playlist', 'tracks'],
     queryFn: () => trackService.getMainPlaylistTracks(),
+    staleTime: 1000 * 60 * 10,
   });
 };
 
 export const usePlaylistTrack = ({
-  user_id,
-  playlist_id,
+  userId,
+  playlistId,
 }: {
-  user_id: string | null;
-  playlist_id: string | null;
+  userId: string | null;
+  playlistId: string | null;
 }) => {
   return useQuery({
-    queryKey: ['playlist', user_id, playlist_id, 'track'],
-    queryFn: () => trackService.getPlaylistTracks({ user_id: user_id!, playlist_id: playlist_id! }),
-    enabled: !!user_id && !!playlist_id, // ID가 있을 때만 실행
+    queryKey: trackKeys.byPlaylist(userId, playlistId), //['playlist', user_id, playlist_id, 'track'],
+    queryFn: () => trackService.getPlaylistTracks({ userId: userId!, playlistId: playlistId! }),
+    enabled: !!userId && !!playlistId, // ID가 있을 때만 실행
   });
 };
 
@@ -67,7 +77,7 @@ export const useAddTrack = () => {
 
     onSuccess: data => {
       queryClient.invalidateQueries({
-        queryKey: ['playlist', data.user_id, data.playlist_id, 'track'],
+        queryKey: trackKeys.byPlaylist(data.user_id, data.playlist_id), //['playlist', data.user_id, data.playlist_id, 'track'],
       });
 
       // queryClient.invalidateQueries({

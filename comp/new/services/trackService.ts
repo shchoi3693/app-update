@@ -42,17 +42,17 @@ export const trackService = {
   },
 
   async getPlaylistTracks({
-    user_id,
-    playlist_id,
+    userId,
+    playlistId,
   }: {
-    user_id: string;
-    playlist_id: string;
+    userId: string;
+    playlistId: string;
   }): Promise<PlaylistTrack[]> {
     const { data, error } = await supabase
       .from('playlist_tracks')
       .select('*, playlists!inner(user_id)')
-      .eq('playlist_id', playlist_id)
-      .eq('user_id', user_id)
+      .eq('playlist_id', playlistId)
+      .eq('user_id', userId)
       .order('added_at', { ascending: true });
 
     if (error) throw error;

@@ -163,6 +163,10 @@ queryKey:['데이터 키', userId, trackId]
 - `enabled` 쿼리 자동 실행 여부
 - `staleTime` 데이터 stale 시간(ms)
 
+### prefetchQuery
+- queryClient 에 직접 호출하는 비동기 매서드
+- 호출 즉시 데이터 캐시, Promise 반환 (await)
+
 ## useMutation
 > 데이터 변경작업
 
@@ -186,6 +190,11 @@ return useMutation({
 - `mutationFn` 실행할 비동기 변이 함수 (필수 옵션)
 - `onSuccess` 변이 성공 후 호출
 
+## useSuspenseQuery
+
+
+
+
 ## 반환
 - 컴포넌트에서 사용
 ```tsx
@@ -201,3 +210,11 @@ const handler = (data) =>{
 	addData(data)
 }
 ```
+
+## Skeleton 처리
+- `isLoading` 또는 Suspense로 처리
+&nbsp; | &nbsp; | &nbsp;
+:------------|:----------------------|:--------------
+`isFetcing` | API요청 진행 중            | 데이터 그대로 둔 채 데이터 업데이트
+`isPending` | 캐시 없음                  | 데이터 추가/수정 (저장 중)
+`isLoading` | `isFetcing` + `isPending` | 초기 화면
