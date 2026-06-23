@@ -134,9 +134,9 @@ export default function Posts() {
 - 호출 즉시 데이터 캐시(리렌더링 없이), Promise 반환 (await)
 - 데이터 사용하려면 `useQuery`나 `useSuspenseQuery` 사용
 
-### HydrationBoundary
-- `dehydrate` 함수를 사용해 직렬화
-- `<HydrationBoundary>` 에 state props로 전달
+## HydrationBoundary
+- `dehydrate` 함수를 사용해 직렬화 : `queryClient` 상태를 JSON으로 직렬화 후  
+&rightarrow; 클라이언트(`<HydrationBoundary>` state props)에 전달, 클라이언트에서 복원
 
 ## useQuery
 > 기본 쿼리 훅
