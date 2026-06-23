@@ -1,8 +1,8 @@
 ---
 date: '2026-06-13'
-title: 'TanStack Query'
+title: 'Tanstack Query 사용 가이드'
 categories: ['Modern Stack']
-summary: 'css, css trick'
+summary: 'Tanstack query Next 구성 방법'
 thumbnail: './gatsby-starter.jpg'
 ---
 
@@ -48,30 +48,31 @@ export default function App() {
 import { ReactNode } from 'react';
 import { environmentManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-export default function TanstackProvider({ children }: { children: ReactNode }) {
-  function makeQueryClient() {
-    return new QueryClient({
-      defaultOptions: {
-        queries: {
-					// refetch 방지 위해 0보다 크게
-          staleTime: 1000 * 60 * 5,
-        },
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // refetch 방지 위해 0보다 크게
+        staleTime: 1000 * 60 * 5,
       },
-    });
-  }
+    },
+  });
+}
 
-  let browserQueryClient: QueryClient | undefined = undefined;
-  function getQueryClient() {
-    if (environmentManager.isServer()) {
-      return makeQueryClient();
-    } else {
-			// new QueryClient 없을 때 생성
-      if (!browserQueryClient) browserQueryClient = makeQueryClient();
-      return browserQueryClient;
-    }
+let browserQueryClient: QueryClient | undefined = undefined;
+function getQueryClient() {
+  if (environmentManager.isServer()) {
+    // 서버일 경우 항상 new 생성
+    return makeQueryClient();
+  } else {
+    // new QueryClient 없을 때 생성
+    if (!browserQueryClient) browserQueryClient = makeQueryClient();
+    return browserQueryClient;
   }
+}
+
+export default function TanstackProvider({ children }: { children: ReactNode }) {
   const queryClient = getQueryClient();
-
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 ```
@@ -108,14 +109,13 @@ export default async function Example() {
   )
 }
 ```
-
 ### Client Component
-- Server Component 에서 `prefetchQuery` 했다면 `useQuery`(`queryKey`) 어디든(server, client) 사용 가능
+- Server Component 에서 `prefetchQuery` 했다면 `useQuery`(같은 `queryKey`) 어디든(server, client) 사용 가능
 ```tsx:title=/page.tsx
 'use client'
 export default function Posts() {
   const { data } = useQuery({
-    queryKey: ['posts'], // prefetch 데이터
+    queryKey: ['posts'], // prefetch한 데이터
     queryFn: () => getPosts(),
   })
 
@@ -128,6 +128,15 @@ export default function Posts() {
 ```
 - Server prefetch : 중요하거나 화면에 먼저 보여야하는 데이터 (SEO 향상, 게시글 본문)
 - Client : 유저 상호작용 데이터 (댓글 목록, 추천 상품)
+
+## prefetchQuery
+- queryClient에 직접 호출하는 비동기 매서드
+- 호출 즉시 데이터 캐시(리렌더링 없이), Promise 반환 (await)
+- 데이터 사용하려면 `useQuery`나 `useSuspenseQuery` 사용
+
+### HydrationBoundary
+- `dehydrate` 함수를 사용해 직렬화
+- `<HydrationBoundary>` 에 state props로 전달
 
 ## useQuery
 > 기본 쿼리 훅
@@ -163,9 +172,121 @@ queryKey:['데이터 키', userId, trackId]
 - `enabled` 쿼리 자동 실행 여부
 - `staleTime` 데이터 stale 시간(ms)
 
-### prefetchQuery
-- queryClient 에 직접 호출하는 비동기 매서드
-- 호출 즉시 데이터 캐시, Promise 반환 (await)
+### useQuery 방식 사용 예시 (Client Component)
+```tsx
+const { data: someData, isPending, isError} = useSomeData();
+const { mutate: addData, isPending: isAddDataPending, isError: addDataError } = useAddData();
+
+if (isPending) return <>Data Loading</>;
+if (!someData || someData.length === 0) return <>Data 0</>;
+if (isAddDataPending) return <>데이터 추가할 때 Loading</>;
+if (isError || addDataError) return <>Error</>;
+
+const handler = (data) =>{
+	addData(data)
+}
+```
+
+## useSuspenseQuery, QueryErrorResetBoundary
+- Loading, Error를 트리 레벨에서 한 번에 관리 (직관적)  
+  - Pendign : throw &rightarrow; 가장 가까운 `<Suspense>`(React) fallback이 Loading
+  - 에러 : throw &rightarrow; `<ErrorBoundary>`(React) 이 catch
+
+### Suspense (React)
+- React에서 컴포넌트가 비동기 작업을 수행하는 동안 로딩 상태 관리하는 기능
+- Suspense 컴포넌트 사용 (status 지정) &rightarrow; Tanstack Query의 suspense옵션 활성화
+
+### ErrorBoundary (React)
+- React에서 컴포넌트 트리 내의 오류를 잡아내 대체 UI 표시
+
+### React 사용 예시
+```tsx
+import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      suspense: true,
+    },
+  },
+});
+
+const ErrorFallback = ({error}) => (
+  <div>{error.message}</div>
+)
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <Suspense fallback={<Loading />}>
+        <Example />
+      </Suspense>
+    </ErrorBoundary>
+  </QueryClientProvider>
+)
+```
+
+### Next.js (App Router) 사용 예시
+```tsx
+export default async function Home() {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery(trackQueries.mainPlaylist());
+  /*
+  await queryClient.prefetchQuery({
+    queryKey: trackKeys.mainPlaylist(),
+    queryFn: () => trackService.getMainPlaylistTracks(),
+  });
+  */
+
+  return (
+    <main className="flex w-full max-w-3xl flex-1 flex-col">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <QueryAsyncBoundary pendingFallback={<Skeleton />}>
+          <MainBnr />
+        </QueryAsyncBoundary>
+      </HydrationBoundary>
+      <Link href="/login">Login</Link>
+    </main>
+  );
+}
+```
+```tsx:title=src/component/QueryAsyncBoundary.tsx
+'use client';
+
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
+import { ReactNode, Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+interface AsyncBoundaryProps {
+  children: ReactNode;
+  pendingFallback: ReactNode;
+}
+export default function QueryAsyncBoundary({ children, pendingFallback }: AsyncBoundaryProps) {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <div>
+              에러가 발생했습니다.
+              <button onClick={resetErrorBoundary}>다시 시도</button>
+            </div>
+          )}
+        >
+          <Suspense fallback={pendingFallback}>{children}</Suspense>
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+}
+```
+```tsx:title=MainBnr.tsx
+...
+const { data } = useSuspenseQuery(trackQueries.mainPlaylist());
+...
+```
 
 ## useMutation
 > 데이터 변경작업
@@ -190,29 +311,10 @@ return useMutation({
 - `mutationFn` 실행할 비동기 변이 함수 (필수 옵션)
 - `onSuccess` 변이 성공 후 호출
 
-## useSuspenseQuery
-
-
-
-
-## 반환
-- 컴포넌트에서 사용
-```tsx
-const { data: someData, isPending, isError} = useSomeData();
-const { mutate: addData, isPending: isAddDataPending, isError: addDataError } = useAddData();
-
-if (isPending) return <>Data Loading</>;
-if (!someData || someData.length === 0) return <>Data 0</>;
-if (isAddDataPending) return <>데이터 추가할 때 Loading</>;
-if (isError || addDataError) return <>Error</>;
-
-const handler = (data) =>{
-	addData(data)
-}
-```
 
 ## Skeleton 처리
 - `isLoading` 또는 Suspense로 처리
+
 &nbsp; | &nbsp; | &nbsp;
 :------------|:----------------------|:--------------
 `isFetcing` | API요청 진행 중            | 데이터 그대로 둔 채 데이터 업데이트
