@@ -1,9 +1,12 @@
 import { trackService } from '@/services/trackService';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 import { Itunes } from '@/types/itunes';
-import { Vibrant } from 'node-vibrant/browser';
-
-import { playlistKeys } from './usePlaylist';
 
 export const trackKeys = {
   all: ['tracks'] as const,
@@ -12,12 +15,13 @@ export const trackKeys = {
     [...trackKeys.all, userId, playlistId] as const,
 };
 
-export const useMainPlaylistTracks = () => {
-  return useQuery({
-    queryKey: trackKeys.mainPlaylist(), //['main_playlist', 'tracks'],
-    queryFn: () => trackService.getMainPlaylistTracks(),
-    staleTime: 1000 * 60 * 10,
-  });
+export const trackQueries = {
+  mainPlaylist: () =>
+    queryOptions({
+      queryKey: trackKeys.mainPlaylist(), //['main_playlist', 'tracks'],
+      queryFn: () => trackService.getMainPlaylistTracks(),
+      staleTime: 1000 * 60 * 10,
+    }),
 };
 
 export const usePlaylistTrack = ({
