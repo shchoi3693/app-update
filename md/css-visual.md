@@ -7,6 +7,52 @@ thumbnail: './gatsby-starter.jpg'
 ---
 
 ## Glass 효과
+
+### SVG Filter
+- svg는 레이어 순서 특성이 없어 선언 순서대로 쌓인다. (z-index 지정하더라도 적용되지 않음)
+- `<defs>` (definitions) 내부에 선언 권장
+
+
+```html
+<svg xmlns="http://www.w3.org/2000/svg" style={{ display: 'none' }}>
+	<filter
+		id="lensFilter"
+		x="0%"
+		y="0%"
+		width="100%"
+		height="100%"
+		filterUnits="objectBoundingBox"
+	>
+		<feComponentTransfer in="SourceAlpha" result="alpha">
+			<feFuncA type="identity" />
+		</feComponentTransfer>
+
+		<feGaussianBlur in="alpha" stdDeviation="60" result="blur" />
+
+		<feDisplacementMap
+			in="SourceGraphic"
+			in2="blur"
+			scale="60"
+			xChannelSelector="A"
+			yChannelSelector="A"
+		/>
+	</filter>
+</svg>
+```
+
+```css
+.bg-glass-filter:before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	backdrop-filter: blur(4px);
+	filter: url(#lensFilter) saturate(110%) brightness(1.15);
+	border-radius: 40px;
+	pointer-events: none;
+}
+```
+
+
 ```html
 <div class="glass">
 	<svg class="glass_mask" width="100%" height="100%" preserveAspectRatio="none">
