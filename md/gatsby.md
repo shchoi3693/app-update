@@ -6,6 +6,11 @@ summary: ''
 thumbnail: './img1.jpg'
 ---
 
+## Framer motion
+- 감성적 경험을 위해 스프링 효과 모션 (메일, 정보성 서비스는 사용 지양)
+[Google Material Motion](https://m3.material.io/styles/motion/overview/how-it-works)
+
+
 ## web api
 ## ResizeObserver
 > 대상 요소 크기 변화 비동기적 관찰, 생성자(객체)
