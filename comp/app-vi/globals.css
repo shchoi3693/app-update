@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --font-pretendard:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+    'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-brand-500: oklch(60% 0.2 200);
+
+  --font-sans: var(--font-pretendard);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  button {
+    line-height: 1;
+  }
+}
+
+@layer utilities {
+  .bg-glass-filter {
+    backdrop-filter: blur(3px);
+    filter: url(#lensFilter) saturate(110%) brightness(1.15);
+    border-radius: 40px;
+
+    > svg {
+      display: none;
+    }
+  }
+  .bg-glass-shadow {
+    box-shadow:
+      inset 1px 1px 0 0 #eceeee,
+      inset -4px -4px 0px -4px #fff,
+      inset -1px -1px 0 0 #d4d6d6cc,
+      inset 1px 1px 5px 0 #d5d8d866,
+      inset -4px -5px 16px 0 #6d707013,
+      0px 3px 8px 1px rgba(0, 0, 0, 0.12);
+
+    border-radius: 40px;
+  }
+}
