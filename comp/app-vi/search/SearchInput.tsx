@@ -9,7 +9,7 @@ interface Props {
 }
 export default function SearchInput({ value, onChange, onReset }: Props) {
   return (
-    <div className="relative flex w-full items-center">
+    <div className="relative mt-4 flex w-full items-center px-2">
       <input
         type="text"
         className="focus:outline-brand-500 w-full rounded-full border border-gray-300 px-4 py-1.5"
@@ -21,7 +21,7 @@ export default function SearchInput({ value, onChange, onReset }: Props) {
           type="reset"
           title="지우기"
           onClick={onReset}
-          className="absolute top-0 right-1 bottom-0 mt-auto mb-auto flex h-8 w-8 cursor-pointer items-center justify-center"
+          className="absolute top-0 right-2 bottom-0 mt-auto mb-auto flex h-8 w-8 cursor-pointer items-center justify-center"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
