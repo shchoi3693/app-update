@@ -12,6 +12,7 @@ import {
   useMotionValue,
   useMotionValueEvent,
   useTransform,
+  Variants,
 } from 'framer-motion';
 
 interface Props {
@@ -22,23 +23,23 @@ interface Props {
 }
 
 const resultsVar = {
-  initial: { opacity: 0 },
+  initial: {},
   animate: {
     opacity: 1,
-    transition: { delayChildren: 0.02, staggerChildren: 0.08 },
+    transition: { staggerChildren: 0.04 },
   },
 };
 
-const itemVar = {
+const itemVar: Variants = {
   initial: { y: 20 },
-  animate: { y: 0, transition: { duration: 0.2 } },
-  exit: { y: -10, transition: { duration: 0.2 } },
+  animate: { y: 0, transition: { type: 'spring', stiffness: 800, damping: 20 } },
+  exit: { y: -30, transition: { type: 'spring', stiffness: 800, damping: 20 } },
 };
 
 const fadeVar = {
-  initial: { opacity: 0 },
+  initial: {},
   animate: { opacity: 1, transition: { duration: 0.1 } },
-  exit: { opacity: 0, transition: { duration: 0.15 } },
+  exit: { transition: { duration: 0.15 } },
 };
 
 export default function SearchResult({ query, tracks, onAddTrack, isLoading }: Props) {
@@ -87,7 +88,7 @@ export default function SearchResult({ query, tracks, onAddTrack, isLoading }: P
               return (
                 <motion.li
                   key={track.trackId}
-                  className="flex h-20 overflow-hidden border-t border-t-gray-200"
+                  className="flex h-24 overflow-hidden border-t border-t-gray-200 p-2"
                   onClick={() => onAddTrack(track)}
                 >
                   <motion.div
