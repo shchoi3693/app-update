@@ -37,6 +37,12 @@
 }
 
 @layer utilities {
+  .scrollbar-hide {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    scrollbar-width: none;
+  }
   .bg-glass-filter {
     backdrop-filter: blur(3px);
     filter: url(#lensFilter) saturate(110%) brightness(1.15);

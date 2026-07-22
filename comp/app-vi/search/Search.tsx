@@ -34,7 +34,7 @@ export default function Search({ userId }: { userId: string }) {
 
   if (!activeTrack)
     return (
-      <div className="absolute top-0 right-0 left-0 z-300 bg-white/60">
+      <div className="absolute inset-0 z-300 bg-white/80">
         <SearchInput
           value={query}
           onChange={e => setQuery(e.target.value)}
