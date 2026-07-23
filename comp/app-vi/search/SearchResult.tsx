@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { Itunes } from '@/types/itunes';
-
 import { AnimatePresence, motion, stagger, Variants } from 'framer-motion';
 
 interface Props {
@@ -10,6 +9,7 @@ interface Props {
   tracks: Itunes[];
   onAddTrack: (track: Itunes) => void;
   isLoading: boolean;
+  isPending: boolean;
 }
 
 const stateBoxVar = {
@@ -48,7 +48,7 @@ const albumVar: Variants = {
   }),
 };
 
-export default function SearchResult({ query, tracks, onAddTrack, isLoading }: Props) {
+export default function SearchResult({ query, tracks, onAddTrack, isLoading, isPending }: Props) {
   const state = isLoading
     ? 'loading'
     : tracks.length === 0 && query.length > 1
@@ -116,35 +116,93 @@ export default function SearchResult({ query, tracks, onAddTrack, isLoading }: P
                       <p className="text-md mt-auto">{track.trackName}</p>
                       <p className="mt-1 text-sm text-gray-500">{track.artistName}</p>
                     </div>
+
                     <button
                       type="button"
                       title="리스트 추가"
                       onClick={() => onAddTrack(track)}
+                      disabled={isPending}
                       className="h-8 w-8 cursor-pointer"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="32"
-                        height="32"
-                        viewBox="0 0 32 32"
-                        fill="none"
-                        className="rounded-full border border-white bg-white/50"
-                      >
-                        <path
-                          d="M16 8 L16 24"
-                          stroke="#6a7282"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M8 16 L24 16"
-                          stroke="#6a7282"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                      {isPending ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                        >
+                          <radialGradient
+                            id="rGradient"
+                            cx=".66"
+                            fx=".66"
+                            cy=".3125"
+                            fy=".3125"
+                            gradientTransform="scale(2)"
+                          >
+                            <stop offset="0" stop-color="#5eebff"></stop>
+                            <stop offset=".3" stop-color="#5eebff" stopOpacity=".9"></stop>
+                            <stop offset=".6" stop-color="#5eebff" stopOpacity=".6"></stop>
+                            <stop offset=".8" stop-color="#5eebff" stopOpacity=".3"></stop>
+                            <stop offset="1" stop-color="#5eebff" stopOpacity="0"></stop>
+                          </radialGradient>
+                          <circle
+                            transformOrigin="center"
+                            fill="none"
+                            stroke="url(#rGradient)"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            cx="16"
+                            cy="16"
+                            r="12"
+                          >
+                            <animateTransform
+                              type="rotate"
+                              attributeName="transform"
+                              calcMode="spline"
+                              dur="2"
+                              values="360;0"
+                              keyTimes="0;1"
+                              keySplines="0 0 1 1"
+                              repeatCount="indefinite"
+                            ></animateTransform>
+                          </circle>
+                          <circle
+                            transformOrigin="center"
+                            fill="none"
+                            opacity=".4"
+                            stroke="#5eebff"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            cx="16"
+                            cy="16"
+                            r="12"
+                          ></circle>
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                          className="rounded-full border border-white bg-white/50"
+                        >
+                          <path
+                            d="M16 8 L16 24"
+                            stroke="#6a7282"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M8 16 L24 16"
+                            stroke="#6a7282"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </motion.li>

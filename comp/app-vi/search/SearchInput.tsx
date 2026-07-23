@@ -1,6 +1,8 @@
 'use client';
 
+import { usePlayerUIStore } from '@/store/usePlayerUIStore';
 import { ChangeEvent } from 'react';
+import { AnimatePresence, motion, stagger, Variants } from 'framer-motion';
 
 interface Props {
   value: string;
@@ -8,10 +10,54 @@ interface Props {
   onReset: () => void;
 }
 export default function SearchInput({ value, onChange, onReset }: Props) {
+  const closeSearch = usePlayerUIStore(state => state.closeSearch);
+  const inputVar: Variants = {
+    initial: { x: 30 },
+    animate: {
+      x: 0,
+      transition: {
+        delay: 0.2,
+        type: 'tween',
+        duration: 0.3,
+        ease: 'backOut',
+      },
+    },
+    exit: { x: 10 },
+  };
   return (
     <div className="absolute top-4 right-0 left-0 z-1 w-full px-2">
       <div className="flex gap-x-2">
-        <div className="relative flex-1">
+        <button
+          type="button"
+          title="검색 닫기"
+          onClick={closeSearch}
+          className="h-9 w-9 cursor-pointer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            fill="none"
+            className="rounded-full border border-white bg-white/50"
+          >
+            <path
+              d="M24 12 L12 24"
+              stroke="#6a7282"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 12 L24 24"
+              stroke="#6a7282"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <motion.div variants={inputVar} className="relative flex-1">
           <input
             type="text"
             className="h-9 w-full rounded-full border border-white bg-white/50 px-4 py-2 leading-none focus:outline-0"
@@ -21,7 +67,7 @@ export default function SearchInput({ value, onChange, onReset }: Props) {
           {value !== '' && (
             <button
               type="reset"
-              title="지우기"
+              title="전체 지우기"
               onClick={onReset}
               className="absolute top-0 right-1 bottom-0 mt-auto mb-auto flex h-8 w-8 cursor-pointer items-center justify-center"
             >
@@ -50,38 +96,7 @@ export default function SearchInput({ value, onChange, onReset }: Props) {
               </svg>
             </button>
           )}
-        </div>
-
-        <button
-          type="button"
-          title="검색 닫기"
-          // onClick={onReset}
-          className="h-9 w-9 cursor-pointer"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="36"
-            height="36"
-            viewBox="0 0 36 36"
-            fill="none"
-            className="rounded-full border border-white bg-white/50"
-          >
-            <path
-              d="M24 10 L10 24"
-              stroke="#6a7282"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10 10L24 24"
-              stroke="#6a7282"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        </motion.div>
       </div>
     </div>
   );
