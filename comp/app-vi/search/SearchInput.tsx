@@ -12,7 +12,7 @@ interface Props {
 export default function SearchInput({ value, onChange, onReset }: Props) {
   const closeSearch = usePlayerUIStore(state => state.closeSearch);
   const inputVar: Variants = {
-    initial: { x: 30 },
+    initial: { x: 20 },
     animate: {
       x: 0,
       transition: {
@@ -22,7 +22,7 @@ export default function SearchInput({ value, onChange, onReset }: Props) {
         ease: 'backOut',
       },
     },
-    exit: { x: 10 },
+    exit: { x: 40 },
   };
   return (
     <div className="absolute top-4 right-0 left-0 z-1 w-full px-2">

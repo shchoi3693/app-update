@@ -130,53 +130,47 @@ export default function SearchResult({ query, tracks, onAddTrack, isLoading, isP
                           width="32"
                           height="32"
                           viewBox="0 0 32 32"
+                          className="rounded-full border border-white bg-white/50"
                         >
-                          <radialGradient
-                            id="rGradient"
-                            cx=".66"
-                            fx=".66"
-                            cy=".3125"
-                            fy=".3125"
-                            gradientTransform="scale(2)"
-                          >
-                            <stop offset="0" stop-color="#5eebff"></stop>
-                            <stop offset=".3" stop-color="#5eebff" stopOpacity=".9"></stop>
-                            <stop offset=".6" stop-color="#5eebff" stopOpacity=".6"></stop>
-                            <stop offset=".8" stop-color="#5eebff" stopOpacity=".3"></stop>
-                            <stop offset="1" stop-color="#5eebff" stopOpacity="0"></stop>
-                          </radialGradient>
                           <circle
-                            transformOrigin="center"
                             fill="none"
-                            stroke="url(#rGradient)"
                             strokeWidth="3"
-                            strokeLinecap="round"
+                            stroke="#ffffff"
                             cx="16"
                             cy="16"
-                            r="12"
+                            r="8"
+                            style={{ transformOrigin: 'center' }}
+                          ></circle>
+                          <radialGradient
+                            id="rGradient"
+                            cx="1"
+                            fx="1"
+                            gradientTransform="scale(1.2)"
+                          >
+                            <stop offset="0" stopColor="#4aacfd"></stop>
+                            <stop offset=".6" stopColor="#4aacfd"></stop>
+                            <stop offset="1" stopColor="#4aacfd" stopOpacity="0"></stop>
+                          </radialGradient>
+                          <circle
+                            fill="none"
+                            strokeWidth="3"
+                            stroke="url(#rGradient)"
+                            cx="16"
+                            cy="16"
+                            r="8"
+                            style={{ transformOrigin: 'center' }}
                           >
                             <animateTransform
                               type="rotate"
                               attributeName="transform"
                               calcMode="spline"
-                              dur="2"
-                              values="360;0"
+                              dur="0.8"
+                              values="0;360"
                               keyTimes="0;1"
-                              keySplines="0 0 1 1"
+                              keySplines="0 0 0.6 1"
                               repeatCount="indefinite"
                             ></animateTransform>
                           </circle>
-                          <circle
-                            transformOrigin="center"
-                            fill="none"
-                            opacity=".4"
-                            stroke="#5eebff"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            cx="16"
-                            cy="16"
-                            r="12"
-                          ></circle>
                         </svg>
                       ) : (
                         <svg
