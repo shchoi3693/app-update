@@ -30,7 +30,7 @@ export default function Search({ userId }: { userId: string }) {
     const isDuplicate = pTracks?.some(t => t.itunes_id === track.trackId) ?? false;
 
     if (isDuplicate) {
-      toast.error('sdf');
+      toast.error('이미 추가');
       return;
     }
     addTrack({ userId, track });
