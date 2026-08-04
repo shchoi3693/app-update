@@ -13,32 +13,41 @@ export default async function Home() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  // console.log(user);
-  //if (user) redirect('/playlist');
-
   const queryClient = new QueryClient();
   await queryClient.prefetchQuery(trackQueries.mainPlaylist());
+
+  if (!user) {
+    redirect('/login');
+  } else {
+    redirect('/playlist');
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center font-sans">
       <main className="flex w-full max-w-3xl flex-1 flex-col">
-        {/* <HydrationBoundary state={dehydrate(queryClient)}>
-          <QueryAsyncBoundary pendingFallback={<SkeletonSwiper />}>
-            <MainBnr />
-          </QueryAsyncBoundary>
-        </HydrationBoundary> */}
-        {!user ? (
-          <Link href="/login">Login</Link>
-        ) : (
-          <>
-            <Link href="/playlist">Playlist</Link>
-            <form action={logout} className="h-full w-full">
-              <button type="submit" className="h-full w-full cursor-pointer pl-4 text-left">
-                Logout
-              </button>
-            </form>
-          </>
-        )}
+        <div className="mt-10">
+          <HydrationBoundary state={dehydrate(queryClient)}>
+            <QueryAsyncBoundary pendingFallback={<SkeletonSwiper />}>
+              <MainBnr />
+            </QueryAsyncBoundary>
+          </HydrationBoundary>
+        </div>
+        <div className="bg-glass-tab">
+          {!user ? (
+            <Link href="/login">Login</Link>
+          ) : (
+            <div className="align-center flex max-w-sm">
+              <Link href="/playlist" className="btn-brand flex-1 rounded-full">
+                Playlist
+              </Link>
+              <form className="" action={logout}>
+                <button type="submit" className="btn-glass cursor-pointer">
+                  Logout
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
